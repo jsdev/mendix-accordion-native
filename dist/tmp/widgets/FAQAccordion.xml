@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<widget id="mendix.faqaccordion.FAQAccordion" pluginWidget="true" needsEntityContext="true" offlineCapable="true"
+        supportedPlatform="Web"
+        xmlns="http://www.mendix.com/widget/1.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.mendix.com/widget/1.0/ ../node_modules/mendix/custom_widget.xsd">
+    <name>FAQ Accordion</name>
+    <description>An accordion widget for FAQ pages with show/hide all functionality and rich text support</description>
+    <icon/>
+    <properties>
+        <propertyGroup caption="Data Source">
+            <property key="dataSourceType" type="enumeration" defaultValue="static">
+                <caption>Data Source Type</caption>
+                <description>Choose between static items or a database entity</description>
+                <enumerationValues>
+                    <enumerationValue key="static">Static Items</enumerationValue>
+                    <enumerationValue key="database">Database Entity</enumerationValue>
+                </enumerationValues>
+            </property>
+            <property key="faqItems" type="object" isList="true" required="false">
+                <caption>FAQ Items (Static)</caption>
+                <description>List of FAQ items with summary and content. Used when Data Source Type is "Static Items".</description>
+                <properties>
+                    <propertyGroup caption="FAQ Item">
+                        <property key="summary" type="textTemplate" required="true">
+                            <caption>Summary</caption>
+                            <description>The summary/question that appears in the accordion header</description>
+                        </property>
+                        <property key="content" type="textTemplate" required="true" multiline="true">
+                            <caption>Content</caption>
+                            <description>The detailed answer/content</description>
+                        </property>
+                        <property key="contentFormat" type="enumeration" defaultValue="html">
+                            <caption>Content Format</caption>
+                            <description>Format of the content field</description>
+                            <enumerationValues>
+                                <enumerationValue key="html">HTML</enumerationValue>
+                                <enumerationValue key="markdown">Markdown</enumerationValue>
+                                <enumerationValue key="text">Plain Text</enumerationValue>
+                            </enumerationValues>
+                        </property>
+                    </propertyGroup>
+                </properties>
+            </property>
+            <property key="dataSource" type="datasource" isList="true" required="false">
+                <caption>FAQ Data Source (Database)</caption>
+                <description>Database entity containing FAQ items. Used when Data Source Type is "Database Entity". 
+                
+Expected Entity Structure:
+- Summary attribute: String or Text (required) - The question/title
+- Content attribute: String or Text (required) - The answer/details  
+- Format attribute: String or Enumeration (optional) - Content format: "html", "markdown", or "text" (case-insensitive)
+- Sort Order attribute: Integer/Long/Decimal (recommended) - For custom ordering and reordering support
+
+Example entity "FAQ" with attributes:
+- Question (String)
+- Answer (Text)
+- AnswerFormat (String or Enumeration: html/markdown/text)
+- SortOrder (Integer) - for custom display order
+  
+If Format attribute is not provided, all content defaults to HTML format.
+  
+💡 Tip: Configure data source sorting by SortOrder ascending for proper display order.</description>
+            </property>
+            <property key="summaryAttribute" type="attribute" dataSource="dataSource" required="false">
+                <caption>Summary Attribute</caption>
+                <description>Attribute containing the FAQ question/summary (String or Text)</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                </attributeTypes>
+            </property>
+            <property key="contentAttribute" type="attribute" dataSource="dataSource" required="false">
+                <caption>Content Attribute</caption>
+                <description>Attribute containing the FAQ answer/content (String or Text)</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                </attributeTypes>
+            </property>
+            <property key="formatAttribute" type="attribute" dataSource="dataSource" required="false">
+                <caption>Format Attribute (Optional)</caption>
+                <description>Attribute for content format. Accepts String or Enumeration with values: "html", "markdown", or "text" (case-insensitive). Unrecognized values will default to HTML. If not specified, defaults to HTML.</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                    <attributeType name="Enum"/>
+                </attributeTypes>
+            </property>
+        </propertyGroup>
+        <propertyGroup caption="Editing (Database Mode Only)">
+            <property key="allowEditing" type="boolean" defaultValue="false">
+                <caption>Allow Editing</caption>
+                <description>Enable edit mode for users with the specified role. Only works with Database Entity data source.</description>
+            </property>
+            <property key="editorRole" type="string" required="false">
+                <caption>Editor Role</caption>
+                <description>User role required to edit FAQ items (e.g., "Administrator", "ContentEditor"). Leave empty to allow all authenticated users. Only applicable when Allow Editing is enabled.</description>
+            </property>
+            <property key="onSaveAction" type="action" required="false">
+                <caption>On Save Action</caption>
+                <description>Microflow or nanoflow to execute when saving an FAQ item. Receives the FAQ object as parameter.</description>
+            </property>
+            <property key="onDeleteAction" type="action" required="false">
+                <caption>On Delete Action</caption>
+                <description>Microflow or nanoflow to execute when deleting an FAQ item. Receives the FAQ object as parameter.</description>
+            </property>
+            <property key="onCreateAction" type="action" required="false">
+                <caption>On Create Action</caption>
+                <description>Microflow or nanoflow to execute when creating a new FAQ item. Should return a new FAQ object.</description>
+            </property>
+            <property key="sortOrderAttribute" type="attribute" dataSource="dataSource" required="false">
+                <caption>Sort Order Attribute</caption>
+                <description>Integer attribute for custom ordering. Used for reordering FAQ items.</description>
+                <attributeTypes>
+                    <attributeType name="Integer"/>
+                    <attributeType name="Long"/>
+                    <attributeType name="Decimal"/>
+                </attributeTypes>
+            </property>
+        </propertyGroup>
+        <propertyGroup caption="General">
+            <property key="defaultExpandAll" type="boolean" defaultValue="false">
+                <caption>Default Expand All</caption>
+                <description>If true, all items are expanded by default</description>
+            </property>
+            <property key="showToggleButton" type="boolean" defaultValue="true">
+                <caption>Show Toggle Button</caption>
+                <description>Show the expand all/collapse all button</description>
+            </property>
+            <property key="toggleButtonText" type="textTemplate" required="false">
+                <caption>Toggle Button Text</caption>
+                <description>Custom text for the toggle button (optional, defaults to "Show All" / "Hide All")</description>
+            </property>
+        </propertyGroup>
+        <propertyGroup caption="Appearance">
+            <property key="animationDuration" type="integer" defaultValue="300">
+                <caption>Animation Duration (ms)</caption>
+                <description>Duration of the expand/collapse animation in milliseconds</description>
+            </property>
+        </propertyGroup>
+    </properties>
+</widget>

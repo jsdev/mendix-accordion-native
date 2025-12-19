@@ -1,0 +1,459 @@
+.faq-accordion-container {
+  width: 100%;
+  max-width: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.faq-accordion-header {
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.faq-toggle-all-btn {
+  padding: 0.5rem 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #ffffff;
+  background-color: #0070f3;
+  border: 2px solid #0070f3;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  outline: none;
+  text-transform: none;
+  line-height: 1.5;
+}
+
+.faq-toggle-all-btn:hover {
+  background-color: #0051cc;
+  border-color: #0051cc;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 112, 243, 0.3);
+}
+
+.faq-toggle-all-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 112, 243, 0.2);
+}
+
+.faq-toggle-all-btn:focus {
+  box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.4);
+}
+
+.faq-toggle-all-btn--expanded {
+  background-color: #f5f5f5;
+  color: #333333;
+  border-color: #d1d1d1;
+}
+
+.faq-toggle-all-btn--expanded:hover {
+  background-color: #e5e5e5;
+  border-color: #c1c1c1;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.faq-accordion-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.faq-item {
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  background-color: #ffffff;
+  overflow: hidden;
+  transition: all 0.2s ease-in-out;
+}
+
+.faq-item:hover {
+  border-color: #d1d1d1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.faq-item--expanded {
+  border-color: #0070f3;
+  box-shadow: 0 2px 12px rgba(0, 112, 243, 0.15);
+}
+
+.faq-item-summary {
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+  background-color: #fafafa;
+  transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  font-weight: 500;
+  color: #333333;
+  outline: none;
+}
+
+.faq-item-summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq-item-summary:hover {
+  background-color: #f0f0f0;
+}
+
+.faq-item-summary:focus {
+  background-color: #f0f0f0;
+  box-shadow: inset 0 0 0 2px #0070f3;
+}
+
+.faq-item-summary:focus-visible {
+  box-shadow: inset 0 0 0 2px #0070f3;
+}
+
+.faq-item--expanded .faq-item-summary {
+  background-color: #f0f7ff;
+  color: #0070f3;
+}
+
+.faq-item--expanded .faq-item-summary:focus {
+  background-color: #e6f2ff;
+}
+
+.faq-item-summary-text {
+  flex: 1;
+  margin-right: 1rem;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.faq-item-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  transition: transform var(--animation-duration, 300ms) ease-in-out;
+  color: #666666;
+}
+
+.faq-item-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.faq-item-icon--expanded {
+  transform: rotate(180deg);
+  color: #0070f3;
+}
+
+.faq-item-content {
+  overflow: hidden;
+  transition: all var(--animation-duration, 300ms) ease-in-out;
+  max-height: 0;
+  opacity: 0;
+}
+
+.faq-item[open] .faq-item-content {
+  max-height: 5000px;
+  opacity: 1;
+  padding: 0 1.25rem 1.25rem 1.25rem;
+}
+
+.faq-item-warnings {
+  padding: 0.75rem;
+  background-color: #fff3cd;
+  border: 1px solid #ffecb5;
+  border-radius: 6px;
+  margin-bottom: 0.75rem;
+}
+
+.faq-item-warning {
+  color: #856404;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin: 0.25rem 0;
+}
+
+.faq-item-warning:first-child {
+  margin-top: 0;
+}
+
+.faq-item-warning:last-child {
+  margin-bottom: 0;
+}
+
+.faq-item-content-inner {
+  padding-top: 0.75rem;
+  color: #555555;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.faq-item-content-inner h1,
+.faq-item-content-inner h2,
+.faq-item-content-inner h3,
+.faq-item-content-inner h4,
+.faq-item-content-inner h5,
+.faq-item-content-inner h6 {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #333333;
+}
+
+.faq-item-content-inner h1 {
+  font-size: 1.5rem;
+}
+
+.faq-item-content-inner h2 {
+  font-size: 1.3rem;
+}
+
+.faq-item-content-inner h3 {
+  font-size: 1.1rem;
+}
+
+.faq-item-content-inner p {
+  margin: 0.5rem 0;
+}
+
+.faq-item-content-inner ul,
+.faq-item-content-inner ol {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.faq-item-content-inner li {
+  margin: 0.25rem 0;
+}
+
+.faq-item-content-inner a {
+  color: #0070f3;
+  text-decoration: none;
+  transition: color 0.2s ease-in-out;
+}
+
+.faq-item-content-inner a:hover {
+  color: #0051cc;
+  text-decoration: underline;
+}
+
+.faq-item-content-inner strong,
+.faq-item-content-inner b {
+  font-weight: 600;
+  color: #333333;
+}
+
+.faq-item-content-inner em,
+.faq-item-content-inner i {
+  font-style: italic;
+}
+
+.faq-item-content-inner code {
+  padding: 0.2rem 0.4rem;
+  background-color: #f5f5f5;
+  border: 1px solid #e5e5e5;
+  border-radius: 3px;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 0.9em;
+}
+
+.faq-item-content-inner pre {
+  padding: 1rem;
+  background-color: #f5f5f5;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.5rem 0;
+}
+
+.faq-item-content-inner pre code {
+  padding: 0;
+  background-color: transparent;
+  border: none;
+}
+
+.faq-item-content-inner blockquote {
+  margin: 0.5rem 0;
+  padding-left: 1rem;
+  border-left: 4px solid #0070f3;
+  color: #666666;
+  font-style: italic;
+}
+
+.faq-item-content-inner img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+
+.faq-item-content-inner table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.5rem 0;
+}
+
+.faq-item-content-inner table th,
+.faq-item-content-inner table td {
+  padding: 0.5rem;
+  border: 1px solid #e5e5e5;
+  text-align: left;
+}
+
+.faq-item-content-inner table th {
+  background-color: #f5f5f5;
+  font-weight: 600;
+}
+
+.faq-item-content-inner hr {
+  margin: 1rem 0;
+  border: none;
+  border-top: 1px solid #e5e5e5;
+}
+
+.faq-accordion-empty,
+.faq-accordion-loading {
+  padding: 2rem;
+  text-align: center;
+  color: #999999;
+  background-color: #f5f5f5;
+  border: 1px dashed #d1d1d1;
+  border-radius: 8px;
+}
+
+.faq-accordion-empty p,
+.faq-accordion-loading p {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.faq-accordion-loading {
+  color: #0070f3;
+  background-color: #f0f7ff;
+  border-color: #c3e0ff;
+}
+
+.faq-accordion-loading p {
+  color: #0070f3;
+}
+
+.faq-accordion-loading p::after {
+  content: "...";
+  animation: loading-dots 1.5s steps(4, end) infinite;
+}
+
+@keyframes loading-dots {
+  0%, 20% {
+    content: "";
+  }
+  40% {
+    content: ".";
+  }
+  60% {
+    content: "..";
+  }
+  80%, 100% {
+    content: "...";
+  }
+}
+
+@media (max-width: 768px) {
+  .faq-accordion-header {
+    justify-content: stretch;
+  }
+  .faq-toggle-all-btn {
+    width: 100%;
+  }
+  .faq-item-summary {
+    padding: 0.875rem 1rem;
+  }
+  .faq-item-summary-text {
+    font-size: 0.95rem;
+  }
+  .faq-item[open] .faq-item-content {
+    padding: 0 1rem 1rem 1rem;
+  }
+  .faq-item-content-inner {
+    font-size: 0.9rem;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .faq-accordion-container {
+    color: #e5e5e5;
+  }
+  .faq-item {
+    background-color: #1e1e1e;
+    border-color: #333333;
+  }
+  .faq-item:hover {
+    border-color: #444444;
+  }
+  .faq-item--expanded {
+    border-color: #0070f3;
+  }
+  .faq-item-summary {
+    background-color: #252525;
+    color: #e5e5e5;
+  }
+  .faq-item-summary:hover {
+    background-color: #2a2a2a;
+  }
+  .faq-item--expanded .faq-item-summary {
+    background-color: #1a2332;
+  }
+  .faq-item-content-inner {
+    color: #c5c5c5;
+  }
+  .faq-item-content-inner h1,
+  .faq-item-content-inner h2,
+  .faq-item-content-inner h3,
+  .faq-item-content-inner h4,
+  .faq-item-content-inner h5,
+  .faq-item-content-inner h6 {
+    color: #e5e5e5;
+  }
+  .faq-item-content-inner strong,
+  .faq-item-content-inner b {
+    color: #e5e5e5;
+  }
+  .faq-item-content-inner code {
+    background-color: #2a2a2a;
+    border-color: #444444;
+  }
+  .faq-item-content-inner pre {
+    background-color: #2a2a2a;
+    border-color: #444444;
+  }
+  .faq-item-content-inner blockquote {
+    color: #999999;
+  }
+  .faq-item-content-inner table th,
+  .faq-item-content-inner table td {
+    border-color: #444444;
+  }
+  .faq-item-content-inner table th {
+    background-color: #252525;
+  }
+  .faq-item-content-inner hr {
+    border-top-color: #444444;
+  }
+  .faq-accordion-empty {
+    background-color: #1e1e1e;
+    border-color: #444444;
+    color: #666666;
+  }
+  .faq-toggle-all-btn--expanded {
+    background-color: #252525;
+    color: #e5e5e5;
+    border-color: #444444;
+  }
+  .faq-toggle-all-btn--expanded:hover {
+    background-color: #2a2a2a;
+    border-color: #555555;
+  }
+}
+
+/*# sourceMappingURL=inline */
+/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbImZpbGU6Ly8vaG9tZS9hbnRob255ZC9HaXQvYWNjb3JkaW9uLW1lbmRpeC13aWRnZXQvc3JjL3VpL0ZBUUFjY29yZGlvbi5zY3NzIiwiLi4vLi4vLi4vLi4vLi4vc3JjL3VpL0ZBUUFjY29yZGlvbi5zY3NzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiJBQUdBO0VBQ0ksV0FBQTtFQUNBLGVBQUE7RUFDQSx1R0FBQTtBQ0ZKOztBRFNBO0VBQ0ksbUJBQUE7RUFDQSxhQUFBO0VBQ0EseUJBQUE7QUNOSjs7QURTQTtFQUNJLHNCQUFBO0VBQ0EsaUJBQUE7RUFDQSxnQkFBQTtFQUNBLGNBQUE7RUFDQSx5QkFBQTtFQUNBLHlCQUFBO0VBQ0Esa0JBQUE7RUFDQSxlQUFBO0VBQ0EsZ0NBQUE7RUFDQSxhQUFBO0VBQ0Esb0JBQUE7RUFDQSxnQkFBQTtBQ05KOztBRFFJO0VBQ0kseUJBQUE7RUFDQSxxQkFBQTtFQUNBLDJCQUFBO0VBQ0EsNENBQUE7QUNOUjs7QURTSTtFQUNJLHdCQUFBO0VBQ0EsNENBQUE7QUNQUjs7QURVSTtFQUNJLDRDQUFBO0FDUlI7O0FEV0k7RUFDSSx5QkFBQTtFQUNBLGNBQUE7RUFDQSxxQkFBQTtBQ1RSOztBRFdRO0VBQ0kseUJBQUE7RUFDQSxxQkFBQTtFQUNBLHdDQUFBO0FDVFo7O0FEaUJBO0VBQ0ksYUFBQTtFQUNBLHNCQUFBO0VBQ0EsV0FBQTtBQ2RKOztBRGlCQTtFQUNJLHlCQUFBO0VBQ0Esa0JBQUE7RUFDQSx5QkFBQTtFQUNBLGdCQUFBO0VBQ0EsZ0NBQUE7QUNkSjs7QURnQkk7RUFDSSxxQkFBQTtFQUNBLHlDQUFBO0FDZFI7O0FEaUJJO0VBQ0kscUJBQUE7RUFDQSw4Q0FBQTtBQ2ZSOztBRHNCQTtFQUNJLHFCQUFBO0VBQ0EsZUFBQTtFQUNBLGdCQUFBO0VBQ0EsYUFBQTtFQUNBLDhCQUFBO0VBQ0EsbUJBQUE7RUFDQSxpQkFBQTtFQUNBLHlCQUFBO0VBQ0EsMEVBQUE7RUFDQSxnQkFBQTtFQUNBLGNBQUE7RUFDQSxhQUFB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*/
