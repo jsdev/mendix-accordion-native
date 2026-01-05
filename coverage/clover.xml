@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1767622719921" clover="3.2.0">
-  <project timestamp="1767622719921" name="All files">
+<coverage generated="1767623599274" clover="3.2.0">
+  <project timestamp="1767623599274" name="All files">
     <metrics statements="131" coveredstatements="125" conditionals="53" coveredconditionals="46" methods="15" coveredmethods="15" elements="199" coveredelements="186" complexity="0" loc="131" ncloc="131" packages="1" files="2" classes="2"/>
     <file name="contentProcessor.ts" path="/home/anthonyd/Git/accordion-mendix-widget/src/utils/contentProcessor.ts">
       <metrics statements="115" coveredstatements="111" conditionals="48" coveredconditionals="41" methods="12" coveredmethods="12"/>

@@ -199,13 +199,68 @@ export function FAQAccordion(props: FAQAccordionContainerProps): ReactElement {
     };
 
     const handleMoveUp = (index: number): void => {
-        // TODO: Implement in Sprint 4
-        console.log("Move up:", index);
+        if (index === 0 || !dataSource || dataSourceType !== "database" || !sortOrderAttribute) {
+            return;
+        }
+
+        const currentItem = dataSource.items?.[index];
+        const previousItem = dataSource.items?.[index - 1];
+
+        if (!currentItem || !previousItem) {
+            return;
+        }
+
+        // Get current sort order values
+        const currentOrder = sortOrderAttribute.get(currentItem).value;
+        const previousOrder = sortOrderAttribute.get(previousItem).value;
+
+        if (!currentOrder || !previousOrder) {
+            return;
+        }
+
+        // Swap the sort order values
+        sortOrderAttribute.get(currentItem).setValue(previousOrder);
+        sortOrderAttribute.get(previousItem).setValue(currentOrder);
+
+        // Execute save action to persist changes
+        if (onSaveAction && onSaveAction.canExecute) {
+            onSaveAction.execute();
+        }
     };
 
     const handleMoveDown = (index: number): void => {
-        // TODO: Implement in Sprint 4
-        console.log("Move down:", index);
+        if (!dataSource || dataSourceType !== "database" || !sortOrderAttribute) {
+            return;
+        }
+
+        const items = dataSource.items || [];
+        if (index >= items.length - 1) {
+            return;
+        }
+
+        const currentItem = items[index];
+        const nextItem = items[index + 1];
+
+        if (!currentItem || !nextItem) {
+            return;
+        }
+
+        // Get current sort order values
+        const currentOrder = sortOrderAttribute.get(currentItem).value;
+        const nextOrder = sortOrderAttribute.get(nextItem).value;
+
+        if (!currentOrder || !nextOrder) {
+            return;
+        }
+
+        // Swap the sort order values
+        sortOrderAttribute.get(currentItem).setValue(nextOrder);
+        sortOrderAttribute.get(nextItem).setValue(currentOrder);
+
+        // Execute save action to persist changes
+        if (onSaveAction && onSaveAction.canExecute) {
+            onSaveAction.execute();
+        }
     };
 
     const handleSaveEdit = (summary: string, content: string, format: ContentFormatEnum): void => {
