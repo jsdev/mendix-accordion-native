@@ -3,7 +3,12 @@ import { FAQAccordionContainerProps, ContentFormatEnum } from "../typings/FAQAcc
 import "./ui/FAQAccordion.scss";
 import classNames from "classnames";
 import { processContent, getContentWarnings } from "./utils/contentProcessor";
+import { checkUserRole, canEdit } from "./utils/editingUtils";
 import { ObjectItem } from "mendix";
+import { FAQItemActions } from "./components/FAQItemActions";
+import { ConfirmDialog } from "./components/ConfirmDialog";
+import { EditModeToggle } from "./components/EditModeToggle";
+import { EditFAQForm } from "./components/EditFAQForm";
 
 interface FAQItem {
     summary: string;
@@ -44,7 +49,13 @@ export function FAQAccordion(props: FAQAccordionContainerProps): ReactElement {
         defaultExpandAll,
         showToggleButton,
         toggleButtonText,
-        animationDuration
+        animationDuration,
+        allowEditing,
+        editorRole,
+        onSaveAction,
+        onDeleteAction,
+        onCreateAction,
+        sortOrderAttribute
     } = props;
 
     // Get FAQ items from either static configuration or database
@@ -76,6 +87,30 @@ export function FAQAccordion(props: FAQAccordionContainerProps): ReactElement {
     // State to track which items are expanded
     const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
     const [allExpanded, setAllExpanded] = useState(defaultExpandAll);
+
+    // Editing state
+    const [editMode, setEditMode] = useState(false);
+    const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
+    const [showCreateForm, setShowCreateForm] = useState(false);
+    const [userHasRole, setUserHasRole] = useState(false);
+    const [deleteConfirmIndex, setDeleteConfirmIndex] = useState<number | null>(null);
+
+    // Check if user has required role
+    useEffect(() => {
+        const checkRole = async () => {
+            if (allowEditing && editorRole) {
+                const hasRole = await checkUserRole(editorRole);
+                setUserHasRole(hasRole);
+            } else if (allowEditing && !editorRole) {
+                // No role restriction - allow editing for all users
+                setUserHasRole(true);
+            } else {
+                setUserHasRole(false);
+            }
+        };
+        
+        checkRole();
+    }, [allowEditing, editorRole]);
 
     // Initialize expanded state based on defaultExpandAll
     useEffect(() => {
@@ -120,6 +155,121 @@ export function FAQAccordion(props: FAQAccordionContainerProps): ReactElement {
         }
     }, [expandedItems, items]);
 
+    // Determine if editing is enabled
+    const isEditingEnabled = canEdit(allowEditing, dataSourceType, userHasRole);
+
+    // Placeholder handlers for CRUD operations (to be implemented in Sprint 3)
+    const handleToggleEditMode = (): void => {
+        setEditMode(!editMode);
+        setEditingItemIndex(null);
+        setShowCreateForm(false);
+    };
+
+    const handleEditItem = (index: number): void => {
+        setEditingItemIndex(index);
+        setShowCreateForm(false);
+    };
+
+    const handleDeleteItem = (index: number): void => {
+        setDeleteConfirmIndex(index);
+    };
+
+    const handleConfirmDelete = (): void => {
+        if (deleteConfirmIndex === null || !dataSource || dataSourceType !== "database") {
+            setDeleteConfirmIndex(null);
+            return;
+        }
+
+        const item = dataSource.items?.[deleteConfirmIndex];
+        if (!item) {
+            setDeleteConfirmIndex(null);
+            return;
+        }
+
+        // Execute delete action
+        if (onDeleteAction && onDeleteAction.canExecute) {
+            onDeleteAction.execute();
+        }
+
+        setDeleteConfirmIndex(null);
+    };
+
+    const handleCancelDelete = (): void => {
+        setDeleteConfirmIndex(null);
+    };
+
+    const handleMoveUp = (index: number): void => {
+        // TODO: Implement in Sprint 4
+        console.log("Move up:", index);
+    };
+
+    const handleMoveDown = (index: number): void => {
+        // TODO: Implement in Sprint 4
+        console.log("Move down:", index);
+    };
+
+    const handleSaveEdit = (summary: string, content: string, format: ContentFormatEnum): void => {
+        if (editingItemIndex === null || !dataSource || dataSourceType !== "database") {
+            setEditingItemIndex(null);
+            return;
+        }
+
+        const item = dataSource.items?.[editingItemIndex];
+        if (!item) {
+            setEditingItemIndex(null);
+            return;
+        }
+
+        // Update attributes
+        if (summaryAttribute) {
+            summaryAttribute.get(item).setValue(summary);
+        }
+        if (contentAttribute) {
+            contentAttribute.get(item).setValue(content);
+        }
+        if (formatAttribute) {
+            formatAttribute.get(item).setValue(format);
+        }
+
+        // Execute save action
+        if (onSaveAction && onSaveAction.canExecute) {
+            onSaveAction.execute();
+        }
+
+        setEditingItemIndex(null);
+    };
+
+    const handleCancelEdit = (): void => {
+        setEditingItemIndex(null);
+        setShowCreateForm(false);
+    };
+
+    const handleCreateNew = (): void => {
+        setShowCreateForm(true);
+        setEditingItemIndex(null);
+    };
+
+    const handleSaveNew = (summary: string, content: string, format: ContentFormatEnum): void => {
+        if (!dataSource || dataSourceType !== "database") {
+            setShowCreateForm(false);
+            return;
+        }
+
+        // For creating new items, we rely on the onCreateAction microflow/nanoflow
+        // to create the object and set initial values. The form data could be passed
+        // as parameters if the action supports it.
+        
+        // Execute create action - the microflow should handle object creation
+        if (onCreateAction && onCreateAction.canExecute) {
+            onCreateAction.execute();
+        }
+
+        // Note: In a real implementation, you might want to store the form data
+        // temporarily and have the action callback update the newly created object
+        
+        setShowCreateForm(false);
+    };
+
     // Show loading state for database mode
     if (dataSourceType === "database" && dataSource && dataSource.status === "loading") {
         return (
@@ -146,17 +296,40 @@ export function FAQAccordion(props: FAQAccordionContainerProps): ReactElement {
 
     return (
         <div className="faq-accordion-container">
-            {showToggleButton && (
+            {(showToggleButton || isEditingEnabled) && (
                 <div className="faq-accordion-header">
-                    <button
-                        className={classNames("faq-toggle-all-btn", {
-                            "faq-toggle-all-btn--expanded": allExpanded
-                        })}
-                        onClick={toggleAll}
-                        type="button"
-                    >
-                        {getToggleButtonText()}
-                    </button>
+                    {showToggleButton && (
+                        <button
+                            className={classNames("faq-toggle-all-btn", {
+                                "faq-toggle-all-btn--expanded": allExpanded
+                            })}
+                            onClick={toggleAll}
+                            type="button"
+                        >
+                            {getToggleButtonText()}
+                        </button>
+                    )}
+                    {isEditingEnabled && (
+                        <div className="faq-editing-controls">
+                            {editMode && (
+                                <button
+                                    type="button"
+                                    className="faq-create-new-btn"
+                                    onClick={handleCreateNew}
+                                    aria-label="Create new FAQ item"
+                                >
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                        <path d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2z" />
+                                    </svg>
+                                    Create New
+                                </button>
+                            )}
+                            <EditModeToggle
+                                editMode={editMode}
+                                onToggle={handleToggleEditMode}
+                            />
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -204,27 +377,39 @@ export function FAQAccordion(props: FAQAccordionContainerProps): ReactElement {
                                 aria-expanded={isExpanded}
                             >
                                 <span className="faq-item-summary-text">{summaryValue}</span>
-                                <span
-                                    className={classNames("faq-item-icon", {
-                                        "faq-item-icon--expanded": isExpanded
-                                    })}
-                                >
-                                    <svg
-                                        width="16"
-                                        height="16"
-                                        viewBox="0 0 16 16"
-                                        fill="none"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                    >
-                                        <path
-                                            d="M4 6L8 10L12 6"
-                                            stroke="currentColor"
-                                            strokeWidth="2"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
+                                <div className="faq-item-summary-controls">
+                                    {editMode && isEditingEnabled && (
+                                        <FAQItemActions
+                                            onEdit={() => handleEditItem(index)}
+                                            onDelete={() => handleDeleteItem(index)}
+                                            onMoveUp={() => handleMoveUp(index)}
+                                            onMoveDown={() => handleMoveDown(index)}
+                                            canMoveUp={index > 0}
+                                            canMoveDown={index < items.length - 1}
                                         />
-                                    </svg>
-                                </span>
+                                    )}
+                                    <span
+                                        className={classNames("faq-item-icon", {
+                                            "faq-item-icon--expanded": isExpanded
+                                        })}
+                                    >
+                                        <svg
+                                            width="16"
+                                            height="16"
+                                            viewBox="0 0 16 16"
+                                            fill="none"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                        >
+                                            <path
+                                                d="M4 6L8 10L12 6"
+                                                stroke="currentColor"
+                                                strokeWidth="2"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                            />
+                                        </svg>
+                                    </span>
+                                </div>
                             </summary>
                             <div className="faq-item-content">
                                 {warnings.length > 0 && (
@@ -245,6 +430,42 @@ export function FAQAccordion(props: FAQAccordionContainerProps): ReactElement {
                     );
                 })}
             </div>
+
+            {/* Edit Form Modal */}
+            {editingItemIndex !== null && items[editingItemIndex] && (
+                <EditFAQForm
+                    summary={items[editingItemIndex].summary}
+                    content={items[editingItemIndex].content}
+                    format={items[editingItemIndex].contentFormat}
+                    onSave={handleSaveEdit}
+                    onCancel={handleCancelEdit}
+                    isNew={false}
+                />
+            )}
+
+            {/* Create Form Modal */}
+            {showCreateForm && (
+                <EditFAQForm
+                    summary=""
+                    content=""
+                    format="html"
+                    onSave={handleSaveNew}
+                    onCancel={handleCancelEdit}
+                    isNew={true}
+                />
+            )}
+
+            {/* Delete Confirmation Dialog */}
+            <ConfirmDialog
+                isOpen={deleteConfirmIndex !== null}
+                title="Delete FAQ Item"
+                message="Are you sure you want to delete this FAQ item? This action cannot be undone."
+                onConfirm={handleConfirmDelete}
+                onCancel={handleCancelDelete}
+                confirmText="Delete"
+                cancelText="Cancel"
+                isDestructive={true}
+            />
         </div>
     );
 }
