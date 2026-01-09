@@ -12,6 +12,8 @@ import {
     processContent,
     getContentWarnings
 } from "../contentProcessor";
+import DOMPurify from "dompurify";
+import * as marked from "marked";
 
 describe("contentProcessor", () => {
     describe("sanitizeHTML", () => {
@@ -46,7 +48,7 @@ describe("contentProcessor", () => {
         });
 
         it("should remove javascript: protocol", () => {
-            const html = '<a href="javascript:alert(\'XSS\')">Click</a>';
+            const html = "<a href=\"javascript:alert('XSS')\">Click</a>";
             const result = sanitizeHTML(html);
             expect(result).not.toContain("javascript:");
         });
@@ -84,7 +86,7 @@ describe("contentProcessor", () => {
             expect(result).toContain("<td>");
         });
 
-        it("should allow tables", () => {
+        it("should allow complete table structures", () => {
             const html = "<table><tr><th>Header</th></tr><tr><td>Cell</td></tr></table>";
             const result = sanitizeHTML(html);
             expect(result).toContain("<table>");
@@ -168,25 +170,24 @@ describe("contentProcessor", () => {
 
     describe("Error Handling", () => {
         it("should handle DOMPurify sanitization errors", () => {
-            const DOMPurify = require("dompurify");
             const originalSanitize = DOMPurify.sanitize;
             const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
-            
+
             // Mock sanitize to throw an error
             DOMPurify.sanitize = jest.fn(() => {
                 throw new Error("Sanitization error");
             });
-            
+
             const html = "<p>Test content</p>";
             const result = sanitizeHTML(html);
-            
+
             // Should fallback to escapeHTML
             expect(result).toBeTruthy();
             expect(consoleErrorSpy).toHaveBeenCalledWith(
                 "Error sanitizing HTML:",
                 expect.any(Error)
             );
-            
+
             // Restore
             DOMPurify.sanitize = originalSanitize;
             consoleErrorSpy.mockRestore();
@@ -216,30 +217,30 @@ describe("contentProcessor", () => {
             const html = '<div onclick="alert()">Click</div>';
             const errors = validateHTML(html);
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors.some(e => e.toLowerCase().includes("event handler"))).toBe(true);
+            expect(errors.some((e) => e.toLowerCase().includes("event handler"))).toBe(true);
         });
 
         it("should detect javascript: protocol", () => {
             const html = '<a href="javascript:void(0)">Link</a>';
             const errors = validateHTML(html);
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors.some(e => e.toLowerCase().includes("javascript protocol"))).toBe(true);
+            expect(errors.some((e) => e.toLowerCase().includes("javascript protocol"))).toBe(true);
         });
 
         it("should detect iframe tags", () => {
             const html = '<iframe src="evil.com"></iframe>';
             const errors = validateHTML(html);
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors.some(e => e.toLowerCase().includes("iframe"))).toBe(true);
+            expect(errors.some((e) => e.toLowerCase().includes("iframe"))).toBe(true);
         });
 
         it("should detect object and embed tags", () => {
             const html1 = '<object data="test.swf"></object>';
             const html2 = '<embed src="test.swf">';
-            
+
             const errors1 = validateHTML(html1);
             const errors2 = validateHTML(html2);
-            
+
             expect(errors1.length).toBeGreaterThan(0);
             expect(errors2.length).toBeGreaterThan(0);
         });
@@ -259,7 +260,7 @@ describe("contentProcessor", () => {
 
     describe("validateHTMLSyntax", () => {
         it("should return empty array for valid HTML", () => {
-            const html = '<p>Hello <strong>world</strong></p>';
+            const html = "<p>Hello <strong>world</strong></p>";
             const errors = validateHTMLSyntax(html);
             expect(errors).toEqual([]);
         });
@@ -272,14 +273,14 @@ describe("contentProcessor", () => {
             const html = '<a href="https://example.com>Link</a>';
             const errors = validateHTMLSyntax(html);
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors.some(e => e.toLowerCase().includes("unclosed"))).toBe(true);
+            expect(errors.some((e) => e.toLowerCase().includes("unclosed"))).toBe(true);
         });
 
         it("should detect unclosed single quote in attribute", () => {
             const html = "<a href='https://example.com>Link</a>";
             const errors = validateHTMLSyntax(html);
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors.some(e => e.toLowerCase().includes("unclosed"))).toBe(true);
+            expect(errors.some((e) => e.toLowerCase().includes("unclosed"))).toBe(true);
         });
 
         it("should detect unclosed opening tag", () => {
@@ -288,32 +289,38 @@ describe("contentProcessor", () => {
             const errors = validateHTMLSyntax(html);
             // This should at least detect the unclosed div and span
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors.some(e => e.toLowerCase().includes("unclosed"))).toBe(true);
+            expect(errors.some((e) => e.toLowerCase().includes("unclosed"))).toBe(true);
         });
 
         it("should detect orphaned closing tag", () => {
-            const html = '<p>Hello</p></div>';
+            const html = "<p>Hello</p></div>";
             const errors = validateHTMLSyntax(html);
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors.some(e => e.toLowerCase().includes("orphaned"))).toBe(true);
+            expect(errors.some((e) => e.toLowerCase().includes("orphaned"))).toBe(true);
         });
 
         it("should detect missing closing tag", () => {
-            const html = '<div><p>Hello</div>';
+            const html = "<div><p>Hello</div>";
             const errors = validateHTMLSyntax(html);
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors.some(e => e.toLowerCase().includes("unclosed") || e.toLowerCase().includes("mismatched"))).toBe(true);
+            expect(
+                errors.some(
+                    (e) =>
+                        e.toLowerCase().includes("unclosed") ||
+                        e.toLowerCase().includes("mismatched")
+                )
+            ).toBe(true);
         });
 
         it("should detect mismatched tags", () => {
-            const html = '<div><span>Text</div></span>';
+            const html = "<div><span>Text</div></span>";
             const errors = validateHTMLSyntax(html);
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors.some(e => e.toLowerCase().includes("mismatched"))).toBe(true);
+            expect(errors.some((e) => e.toLowerCase().includes("mismatched"))).toBe(true);
         });
 
         it("should handle self-closing tags correctly", () => {
-            const html = '<p>Text<br/>More text</p>';
+            const html = "<p>Text<br/>More text</p>";
             const errors = validateHTMLSyntax(html);
             expect(errors).toEqual([]);
         });
@@ -325,13 +332,13 @@ describe("contentProcessor", () => {
         });
 
         it("should detect multiple unclosed tags", () => {
-            const html = '<div><span><p>Text';
+            const html = "<div><span><p>Text";
             const errors = validateHTMLSyntax(html);
             expect(errors.length).toBeGreaterThanOrEqual(3); // All three tags unclosed
         });
 
         it("should handle nested tags correctly", () => {
-            const html = '<div><ul><li>Item 1</li><li>Item 2</li></ul></div>';
+            const html = "<div><ul><li>Item 1</li><li>Item 2</li></ul></div>";
             const errors = validateHTMLSyntax(html);
             expect(errors).toEqual([]);
         });
@@ -340,7 +347,7 @@ describe("contentProcessor", () => {
             const html = '<a href="https://example.com" target="_blank>Link</a>';
             const errors = validateHTMLSyntax(html);
             expect(errors.length).toBeGreaterThan(0);
-            expect(errors.some(e => e.toLowerCase().includes("unclosed"))).toBe(true);
+            expect(errors.some((e) => e.toLowerCase().includes("unclosed"))).toBe(true);
         });
     });
 
@@ -368,7 +375,7 @@ describe("contentProcessor", () => {
             const text = "Line 1\nLine 2\nLine 3";
             const result = textToHTML(text);
             expect(result).toContain("<br>");
-            expect(result.split("<br>").length).toBe(3);
+            expect(result.split("<br>")).toHaveLength(3);
         });
 
         it("should escape HTML in plain text", () => {
@@ -398,7 +405,7 @@ describe("contentProcessor", () => {
             // Note: H1 tags are stripped by DOMPurify for security (not in ALLOWED_TAGS)
             expect(result).toContain("<strong>");
             expect(result).toContain("<em>");
-            expect(result).toContain("Heading");  // Text is kept, just not the tag
+            expect(result).toContain("Heading"); // Text is kept, just not the tag
         });
 
         it("should convert markdown links", () => {
@@ -425,7 +432,7 @@ describe("contentProcessor", () => {
             const markdown = '<script>alert("XSS")</script>\n\n# Safe Heading';
             const result = markdownToHTML(markdown);
             expect(result).not.toContain("<script>");
-            expect(result).toContain("Safe Heading");  // Text kept, heading tag stripped
+            expect(result).toContain("Safe Heading"); // Text kept, heading tag stripped
         });
 
         it("should return empty string for empty input", () => {
@@ -440,24 +447,20 @@ describe("contentProcessor", () => {
         });
 
         it("should handle markdown parsing errors gracefully", () => {
-            const marked = require("marked");
-            const originalParse = marked.parse;
             const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
-            
-            // Mock parse to throw an error
-            marked.parse = () => {
+            const parseSpy = jest.spyOn(marked, "parse").mockImplementation(() => {
                 throw new Error("Markdown parsing error");
-            };
-            
+            });
+
             const markdown = "# Test content";
             const result = markdownToHTML(markdown);
-            
+
             // Should fallback to escapeHTML
             expect(result).toBeTruthy();
             expect(result).toContain("Test content");
-            
+
             // Restore
-            marked.parse = originalParse;
+            parseSpy.mockRestore();
             consoleErrorSpy.mockRestore();
         });
     });
@@ -501,7 +504,7 @@ describe("contentProcessor", () => {
         });
 
         it("should treat unknown format as HTML and sanitize", () => {
-            const content = '<p>Safe content</p><script>alert()</script>';
+            const content = "<p>Safe content</p><script>alert()</script>";
             const result = processContent(content, "invalid-format" as any);
             // Should sanitize as HTML, keeping safe tags, removing dangerous ones
             expect(result).toContain("<p>");
@@ -511,7 +514,7 @@ describe("contentProcessor", () => {
 
         it("should sanitize dangerous content in all formats", () => {
             const dangerous = '<script>alert("XSS")</script>';
-            
+
             expect(processContent(dangerous, "html")).not.toContain("<script>");
             expect(processContent(dangerous, "markdown")).not.toContain("<script>");
             expect(processContent(dangerous, "text")).not.toContain("<script>");
@@ -537,7 +540,7 @@ describe("contentProcessor", () => {
             const markdownWarnings = getContentWarnings(content, "markdown");
             expect(markdownWarnings.length).toBeGreaterThan(0);
             expect(markdownWarnings[0]).toContain("Embedded HTML");
-            
+
             // Text format doesn't validate
             expect(getContentWarnings(content, "text")).toEqual([]);
         });
@@ -548,7 +551,8 @@ describe("contentProcessor", () => {
         });
 
         it("should detect multiple issues", () => {
-            const content = '<script>alert()</script><iframe src="evil"></iframe><a onclick="bad()">Link</a>';
+            const content =
+                '<script>alert()</script><iframe src="evil"></iframe><a onclick="bad()">Link</a>';
             const warnings = getContentWarnings(content, "html");
             expect(warnings.length).toBeGreaterThan(2);
         });
@@ -575,7 +579,7 @@ describe("contentProcessor", () => {
         });
 
         it("should allow safe HTML in markdown", () => {
-            const content = '# Heading\n\n<strong>Bold</strong> and <em>italic</em>';
+            const content = "# Heading\n\n<strong>Bold</strong> and <em>italic</em>";
             const warnings = getContentWarnings(content, "markdown");
             expect(warnings).toEqual([]);
         });
@@ -630,12 +634,12 @@ const code = "example";
         });
 
         it("should process and validate content pipeline", () => {
-            const content = '<p>Safe content</p><script>alert()</script>';
-            
+            const content = "<p>Safe content</p><script>alert()</script>";
+
             // Validate first
             const warnings = getContentWarnings(content, "html");
             expect(warnings.length).toBeGreaterThan(0);
-            
+
             // Process anyway (should sanitize)
             const processed = processContent(content, "html");
             expect(processed).not.toContain("<script>");

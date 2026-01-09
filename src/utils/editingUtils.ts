@@ -33,11 +33,7 @@ export async function checkUserRole(requiredRole: string): Promise<boolean> {
  * @param hasRole - Whether user has required role
  * @returns boolean - True if editing should be allowed
  */
-export function canEdit(
-    allowEditing: boolean,
-    dataSourceType: string,
-    hasRole: boolean
-): boolean {
+export function canEdit(allowEditing: boolean, dataSourceType: string, hasRole: boolean): boolean {
     // Editing only works with database mode
     if (dataSourceType !== "database") {
         return false;

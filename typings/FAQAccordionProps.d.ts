@@ -31,9 +31,6 @@ export interface FAQAccordionContainerProps {
     dataSourceType: DataSourceTypeEnum;
     faqItems: FaqItemsType[];
     dataSource?: ListValue;
-    summaryAttribute?: ListAttributeValue<string>;
-    contentAttribute?: ListAttributeValue<string>;
-    formatAttribute?: ListAttributeValue<string>;
     allowEditing: boolean;
     editorRole: string;
     onSaveAction?: ActionValue;
@@ -44,6 +41,10 @@ export interface FAQAccordionContainerProps {
     showToggleButton: boolean;
     toggleButtonText?: DynamicValue<string>;
     animationDuration: number;
+    summaryAttribute?: ListAttributeValue<string>;
+    contentAttribute?: ListAttributeValue<string>;
+    contentFormatAttribute?: ListAttributeValue<string>;
+    sortOrderAttributeOverride?: ListAttributeValue<Big>;
 }
 
 export interface FAQAccordionPreviewProps {
@@ -60,9 +61,6 @@ export interface FAQAccordionPreviewProps {
     dataSourceType: DataSourceTypeEnum;
     faqItems: FaqItemsPreviewType[];
     dataSource: {} | { caption: string } | { type: string } | null;
-    summaryAttribute: string;
-    contentAttribute: string;
-    formatAttribute: string;
     allowEditing: boolean;
     editorRole: string;
     onSaveAction: {} | null;
@@ -73,4 +71,8 @@ export interface FAQAccordionPreviewProps {
     showToggleButton: boolean;
     toggleButtonText: string;
     animationDuration: number | null;
+    summaryAttribute: string;
+    contentAttribute: string;
+    contentFormatAttribute: string;
+    sortOrderAttributeOverride: string;
 }

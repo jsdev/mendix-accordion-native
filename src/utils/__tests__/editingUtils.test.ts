@@ -16,7 +16,7 @@ describe("editingUtils", () => {
             const result1 = await checkUserRole("Editor");
             const result2 = await checkUserRole("Moderator");
             const result3 = await checkUserRole("Admin");
-            
+
             expect(result1).toBe(true);
             expect(result2).toBe(true);
             expect(result3).toBe(true);
@@ -82,7 +82,7 @@ describe("editingUtils", () => {
             const id1 = generateTempId();
             const id2 = generateTempId();
             const id3 = generateTempId();
-            
+
             expect(id1).not.toBe(id2);
             expect(id2).not.toBe(id3);
             expect(id1).not.toBe(id3);
@@ -96,8 +96,8 @@ describe("editingUtils", () => {
 
         it("should generate consistent format across multiple calls", () => {
             const ids = Array.from({ length: 10 }, () => generateTempId());
-            
-            ids.forEach(id => {
+
+            ids.forEach((id) => {
                 expect(id).toMatch(/^temp_/);
                 expect(typeof id).toBe("string");
             });
@@ -106,15 +106,15 @@ describe("editingUtils", () => {
         it("should generate IDs that are time-based and sequential", () => {
             const id1 = generateTempId();
             // Small delay to ensure different timestamp
-            const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-            
+            const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
             return delay(5).then(() => {
                 const id2 = generateTempId();
-                
+
                 // Extract numeric portions (after temp_)
                 const num1 = parseInt(id1.split("_")[1], 10);
                 const num2 = parseInt(id2.split("_")[1], 10);
-                
+
                 expect(num2).toBeGreaterThanOrEqual(num1);
             });
         });
@@ -125,7 +125,7 @@ describe("editingUtils", () => {
             const hasRole = await checkUserRole("Editor");
             const allowsEdit = canEdit(true, "database", hasRole);
             const tempId = generateTempId();
-            
+
             expect(hasRole).toBe(true);
             expect(allowsEdit).toBe(true);
             expect(tempId).toMatch(/^temp_/);
@@ -134,7 +134,7 @@ describe("editingUtils", () => {
         it("should prevent editing when conditions not met", async () => {
             const hasRole = await checkUserRole("Viewer");
             const allowsEdit = canEdit(true, "static", hasRole);
-            
+
             // Even though hasRole is true, static mode prevents editing
             expect(allowsEdit).toBe(false);
         });
@@ -143,7 +143,7 @@ describe("editingUtils", () => {
             const hasRole = await checkUserRole("");
             const allowsEdit1 = canEdit(true, "database", hasRole);
             const allowsEdit2 = canEdit(false, "database", hasRole);
-            
+
             expect(hasRole).toBe(true);
             expect(allowsEdit1).toBe(true);
             expect(allowsEdit2).toBe(false);

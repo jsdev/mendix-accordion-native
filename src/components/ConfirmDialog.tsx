@@ -1,4 +1,4 @@
-import { ReactElement, createElement } from "react";
+import { ReactElement } from "react";
 import * as React from "react";
 import classNames from "classnames";
 
@@ -39,7 +39,11 @@ export function ConfirmDialog(props: ConfirmDialogProps): ReactElement | null {
     };
 
     return (
-        <div className="faq-confirm-dialog-overlay" onClick={handleOverlayClick} role="presentation">
+        <div
+            className="faq-confirm-dialog-overlay"
+            onClick={handleOverlayClick}
+            role="presentation"
+        >
             <div
                 className="faq-confirm-dialog"
                 role="alertdialog"

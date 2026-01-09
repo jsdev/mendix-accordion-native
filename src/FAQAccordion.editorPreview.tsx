@@ -1,6 +1,10 @@
-import { createElement } from "react";
 import { FAQAccordionPreviewProps } from "../typings/FAQAccordionProps";
-import { processContent, sanitizeHTML, getContentWarnings, ContentFormat } from "./utils/contentProcessor";
+import {
+    processContent,
+    sanitizeHTML,
+    getContentWarnings,
+    ContentFormat
+} from "./utils/contentProcessor";
 
 // Helper to get format label
 function getFormatLabel(format?: string): string {
@@ -16,19 +20,22 @@ function getFormatLabel(format?: string): string {
 }
 
 // Check if sanitization modified the content
-function checkSanitization(content: string, format: string): { modified: boolean; originalHtml: string; sanitizedHtml: string } {
+function checkSanitization(
+    content: string,
+    format: string
+): { modified: boolean; originalHtml: string; sanitizedHtml: string } {
     if (!content || format === "text") {
         return { modified: false, originalHtml: "", sanitizedHtml: "" };
     }
 
     let originalHtml = content;
-    
+
     // For markdown, convert to HTML first
     if (format === "markdown") {
         try {
             // Simple markdown to HTML conversion for comparison
             // In production, this uses marked.js, but for preview we'll do basic detection
-            const hasMarkdownSyntax = /[*_#\[\]`]/.test(content);
+            const hasMarkdownSyntax = /[*_#[\]`]/.test(content);
             if (hasMarkdownSyntax) {
                 // If it has markdown syntax, we know it will be converted
                 originalHtml = content; // Keep as is for now
@@ -37,15 +44,15 @@ function checkSanitization(content: string, format: string): { modified: boolean
             // Ignore errors
         }
     }
-    
+
     // Sanitize the HTML
     const sanitizedHtml = sanitizeHTML(originalHtml);
-    
+
     // Check if sanitization changed the content
     // Normalize whitespace for comparison
     const normalizedOriginal = originalHtml.replace(/\s+/g, " ").trim();
     const normalizedSanitized = sanitizedHtml.replace(/\s+/g, " ").trim();
-    
+
     return {
         modified: normalizedOriginal !== normalizedSanitized,
         originalHtml,
@@ -58,20 +65,23 @@ function previewContent(content: string, format: string): JSX.Element {
     if (!content) {
         return <span style={{ fontStyle: "italic", color: "#999" }}>[No content]</span>;
     }
-    
+
     const maxLength = 300;
-    
+
     // Process content through the same pipeline as runtime
     const processedHtml = processContent(content, format as ContentFormat);
-    const truncated = processedHtml.length > maxLength ? processedHtml.substring(0, maxLength) + "..." : processedHtml;
-    
+    const truncated =
+        processedHtml.length > maxLength
+            ? processedHtml.substring(0, maxLength) + "..."
+            : processedHtml;
+
     switch (format) {
         case "markdown":
             // Show rendered HTML from markdown (same as runtime)
             return (
-                <div 
+                <div
                     dangerouslySetInnerHTML={{ __html: truncated }}
-                    style={{ 
+                    style={{
                         wordWrap: "break-word",
                         overflowWrap: "break-word"
                     }}
@@ -80,9 +90,9 @@ function previewContent(content: string, format: string): JSX.Element {
         case "text":
             // Show processed text (with <br> tags, same as runtime)
             return (
-                <div 
+                <div
                     dangerouslySetInnerHTML={{ __html: truncated }}
-                    style={{ 
+                    style={{
                         wordWrap: "break-word",
                         overflowWrap: "break-word",
                         whiteSpace: "pre-wrap"
@@ -93,9 +103,9 @@ function previewContent(content: string, format: string): JSX.Element {
         default:
             // Show SANITIZED HTML (same as runtime)
             return (
-                <div 
+                <div
                     dangerouslySetInnerHTML={{ __html: truncated }}
-                    style={{ 
+                    style={{
                         wordWrap: "break-word",
                         overflowWrap: "break-word"
                     }}
@@ -105,12 +115,13 @@ function previewContent(content: string, format: string): JSX.Element {
 }
 
 export function preview(props: FAQAccordionPreviewProps) {
-    const { dataSourceType, faqItems, dataSource, showToggleButton } = props;
-    
+    const { dataSourceType, faqItems, dataSource, showToggleButton, allowEditing, editorRole } =
+        props;
+
     // Determine item count and source
     let itemCount = 0;
     let sourceLabel = "";
-    
+
     if (dataSourceType === "database") {
         // Database mode
         sourceLabel = "Database Entity";
@@ -136,7 +147,49 @@ export function preview(props: FAQAccordionPreviewProps) {
             }}
         >
             {showToggleButton && (
-                <div style={{ marginBottom: "12px", textAlign: "right" }}>
+                <div
+                    style={{
+                        marginBottom: "12px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        gap: "8px"
+                    }}
+                >
+                    <div>
+                        {allowEditing && dataSourceType === "database" && (
+                            <div style={{ display: "flex", gap: "8px" }}>
+                                <button
+                                    style={{
+                                        padding: "6px 12px",
+                                        backgroundColor: "#28a745",
+                                        color: "#ffffff",
+                                        border: "2px solid #28a745",
+                                        borderRadius: "6px",
+                                        cursor: "default",
+                                        fontWeight: 500,
+                                        fontSize: "13px"
+                                    }}
+                                >
+                                    ➕ Create New
+                                </button>
+                                <button
+                                    style={{
+                                        padding: "6px 12px",
+                                        backgroundColor: "#0070f3",
+                                        color: "#ffffff",
+                                        border: "2px solid #0070f3",
+                                        borderRadius: "6px",
+                                        cursor: "default",
+                                        fontWeight: 500,
+                                        fontSize: "13px"
+                                    }}
+                                >
+                                    ✏️ Edit
+                                </button>
+                            </div>
+                        )}
+                    </div>
                     <button
                         style={{
                             padding: "8px 24px",
@@ -172,13 +225,28 @@ export function preview(props: FAQAccordionPreviewProps) {
                             FAQ items will be loaded from the configured data source at runtime.
                             <br />
                             <br />
-                            <strong>Configuration:</strong>
+                            <strong>⚠️ Required Entity Attributes:</strong>
                             <br />
-                            Summary: {props.summaryAttribute || "[Not configured]"}
+                            • Summary (String/Text) - Question or title
                             <br />
-                            Content: {props.contentAttribute || "[Not configured]"}
+                            • Content (String/Text) - Answer or details
                             <br />
-                            Format: {props.formatAttribute || "[Optional - defaults to HTML]"}
+                            • ContentFormat (String/Enum) - Format: html/markdown/text
+                            <br />• SortOrder (Integer/Long/Decimal) - For ordering
+                            {allowEditing && (
+                                <>
+                                    <br />
+                                    <br />
+                                    <strong style={{ color: "#28a745" }}>✅ Editing Enabled</strong>
+                                    <br />
+                                    {editorRole && `Editor Role: ${editorRole}`}
+                                    {!editorRole && "No role restriction (all users can edit)"}
+                                    <br />
+                                    Sort Order Attribute:{" "}
+                                    {props.sortOrderAttribute ||
+                                        "[Not configured - Move Up/Down disabled]"}
+                                </>
+                            )}
                         </p>
                     </div>
                 ) : itemCount > 0 ? (
@@ -186,21 +254,23 @@ export function preview(props: FAQAccordionPreviewProps) {
                     faqItems?.map((item, index) => {
                         const contentValue = item.content || "";
                         const format = item.contentFormat || "html";
-                        
+
                         // Get validation warnings
                         const warnings = getContentWarnings(contentValue, format as ContentFormat);
-                        
+
                         // Check if sanitization will modify the content
                         const sanitizationCheck = checkSanitization(contentValue, format);
-                        
+
                         // Combine all issues
                         const allWarnings = [...warnings];
                         if (sanitizationCheck.modified) {
-                            allWarnings.push("Content will be sanitized at runtime (dangerous elements removed)");
+                            allWarnings.push(
+                                "Content will be sanitized at runtime (dangerous elements removed)"
+                            );
                         }
-                        
+
                         const hasIssues = allWarnings.length > 0;
-                        
+
                         return (
                             <div
                                 key={index}
@@ -222,7 +292,9 @@ export function preview(props: FAQAccordionPreviewProps) {
                                         color: "#0070f3"
                                     }}
                                 >
-                                    <span style={{ flex: 1 }}>{item.summary || "[Question/Summary]"}</span>
+                                    <span style={{ flex: 1 }}>
+                                        {item.summary || "[Question/Summary]"}
+                                    </span>
                                     <span
                                         style={{
                                             fontSize: "10px",
@@ -237,7 +309,15 @@ export function preview(props: FAQAccordionPreviewProps) {
                                     >
                                         {getFormatLabel(format)}
                                     </span>
-                                    <span style={{ color: "#0070f3", transform: "rotate(180deg)", display: "inline-block" }}>▼</span>
+                                    <span
+                                        style={{
+                                            color: "#0070f3",
+                                            transform: "rotate(180deg)",
+                                            display: "inline-block"
+                                        }}
+                                    >
+                                        ▼
+                                    </span>
                                 </div>
                                 {/* Expanded content preview */}
                                 <div
@@ -257,22 +337,39 @@ export function preview(props: FAQAccordionPreviewProps) {
                                                 marginBottom: "8px"
                                             }}
                                         >
-                                            <div style={{ fontWeight: "bold", color: "#ff8c00", fontSize: "12px", marginBottom: "4px" }}>
+                                            <div
+                                                style={{
+                                                    fontWeight: "bold",
+                                                    color: "#ff8c00",
+                                                    fontSize: "12px",
+                                                    marginBottom: "4px"
+                                                }}
+                                            >
                                                 ⚠️ Content Warnings:
                                             </div>
-                                            <ul style={{ margin: "0", paddingLeft: "20px", color: "#d97700", fontSize: "11px" }}>
+                                            <ul
+                                                style={{
+                                                    margin: "0",
+                                                    paddingLeft: "20px",
+                                                    color: "#d97700",
+                                                    fontSize: "11px"
+                                                }}
+                                            >
                                                 {allWarnings.map((warning, i) => (
                                                     <li key={i}>{warning}</li>
                                                 ))}
                                             </ul>
                                             {sanitizationCheck.modified && (
-                                                <div style={{ 
-                                                    marginTop: "8px", 
-                                                    fontSize: "11px", 
-                                                    color: "#666",
-                                                    fontStyle: "italic"
-                                                }}>
-                                                    💡 Preview shows sanitized output (matching runtime behavior)
+                                                <div
+                                                    style={{
+                                                        marginTop: "8px",
+                                                        fontSize: "11px",
+                                                        color: "#666",
+                                                        fontStyle: "italic"
+                                                    }}
+                                                >
+                                                    💡 Preview shows sanitized output (matching
+                                                    runtime behavior)
                                                 </div>
                                             )}
                                         </div>
@@ -305,7 +402,7 @@ export function preview(props: FAQAccordionPreviewProps) {
                             No FAQ items configured
                             <br />
                             <small>
-                                {dataSourceType === "database" as any
+                                {dataSourceType === ("database" as any)
                                     ? "Configure the data source in the properties panel"
                                     : "Add FAQ items in the properties panel"}
                             </small>

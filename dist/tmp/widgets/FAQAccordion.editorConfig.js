@@ -287,12 +287,31 @@ function requireDist() {
   return dist;
 }
 var distExports = /*@__PURE__*/requireDist();
-function getProperties(values, defaultProperties, target) {
+function getProperties(values, defaultProperties, _target) {
   // Hide toggle button text if toggle button is not shown
   if (!values.showToggleButton) {
     distExports.hidePropertiesIn(defaultProperties, values, ["toggleButtonText"]);
   }
   return defaultProperties;
+}
+/**
+ * Validate widget configuration - returns problems shown in Studio Pro
+ */
+function check(values) {
+  var errors = [];
+  // Check for partial attribute overrides (all-or-nothing requirement)
+  var overrides = [values.summaryAttribute, values.contentAttribute, values.contentFormatAttribute, values.sortOrderAttributeOverride];
+  var configuredCount = overrides.filter(function (o) {
+    return o && o !== "";
+  }).length;
+  if (configuredCount > 0 && configuredCount < 4) {
+    errors.push({
+      property: "summaryAttribute",
+      severity: "error",
+      message: "Attribute Overrides require ALL or NONE to be configured. You have configured ".concat(configuredCount, " of 4. Either configure all four attribute overrides, or leave them all empty to use defaults (Summary, Content, ContentFormat, SortOrder).")
+    });
+  }
+  return errors;
 }
 function getPreview() {
   return {
@@ -310,8 +329,9 @@ function getPreview() {
 }
 function getCustomCaption(values) {
   var itemCount = values.faqItems ? values.faqItems.length : 0;
-  return "FAQ Accordion (".concat(itemCount, " item").concat(itemCount !== 1 ? 's' : '', ")");
+  return "FAQ Accordion (".concat(itemCount, " item").concat(itemCount !== 1 ? "s" : "", ")");
 }
+exports.check = check;
 exports.getCustomCaption = getCustomCaption;
 exports.getPreview = getPreview;
 exports.getProperties = getProperties;

@@ -1,4 +1,4 @@
-import { ReactElement, createElement, useState, useEffect } from "react";
+import { ReactElement, useState } from "react";
 import { ContentFormatEnum } from "../../typings/FAQAccordionProps";
 import { processContent, getContentWarnings } from "../utils/contentProcessor";
 import classNames from "classnames";
@@ -7,17 +7,34 @@ interface EditFAQFormProps {
     summary: string;
     content: string;
     format: ContentFormatEnum;
-    onSave: (summary: string, content: string, format: ContentFormatEnum) => void;
+    sortOrder?: number;
+    onSave: (
+        summary: string,
+        content: string,
+        format: ContentFormatEnum,
+        sortOrder: number
+    ) => void;
     onCancel: () => void;
     isNew?: boolean;
+    isInline?: boolean;
 }
 
 export function EditFAQForm(props: EditFAQFormProps): ReactElement {
-    const { summary: initialSummary, content: initialContent, format: initialFormat, onSave, onCancel, isNew = false } = props;
+    const {
+        summary: initialSummary,
+        content: initialContent,
+        format: initialFormat,
+        sortOrder: initialSortOrder = 10,
+        onSave,
+        onCancel,
+        isNew = false,
+        isInline = false
+    } = props;
 
     const [summary, setSummary] = useState(initialSummary);
     const [content, setContent] = useState(initialContent);
     const [format, setFormat] = useState<ContentFormatEnum>(initialFormat);
+    const [sortOrder, setSortOrder] = useState(initialSortOrder);
     const [showPreview, setShowPreview] = useState(false);
 
     // Validation warnings
@@ -33,11 +50,11 @@ export function EditFAQForm(props: EditFAQFormProps): ReactElement {
             alert("Content/Answer is required");
             return;
         }
-        onSave(summary.trim(), content.trim(), format);
+        onSave(summary.trim(), content.trim(), format, sortOrder);
     };
 
     return (
-        <div className="faq-edit-form">
+        <div className={classNames("faq-edit-form", { "faq-edit-form--inline": isInline })}>
             <div className="faq-edit-form-header">
                 <h3>{isNew ? "Add New FAQ" : "Edit FAQ"}</h3>
                 <button
@@ -67,6 +84,27 @@ export function EditFAQForm(props: EditFAQFormProps): ReactElement {
                     />
                 </div>
 
+                {/* Sort Order Field */}
+                <div className="faq-form-field">
+                    <label htmlFor="faq-sortorder">
+                        Sort Order <span className="faq-required">*</span>
+                    </label>
+                    <input
+                        id="faq-sortorder"
+                        type="number"
+                        className="faq-form-input"
+                        value={sortOrder}
+                        onChange={(e) => setSortOrder(Number(e.target.value))}
+                        required
+                        min="0"
+                        step="10"
+                    />
+                    <small className="faq-form-help">
+                        Items are displayed in ascending sort order (10, 20, 30...). Lower numbers
+                        appear first.
+                    </small>
+                </div>
+
                 {/* Format Field */}
                 <div className="faq-form-field">
                     <label htmlFor="faq-format">
@@ -84,7 +122,8 @@ export function EditFAQForm(props: EditFAQFormProps): ReactElement {
                     </select>
                     <small className="faq-form-help">
                         {format === "html" && "Allows rich formatting with HTML tags"}
-                        {format === "markdown" && "Uses Markdown syntax (e.g., **bold**, # heading)"}
+                        {format === "markdown" &&
+                            "Uses Markdown syntax (e.g., **bold**, # heading)"}
                         {format === "text" && "Plain text only, HTML will be escaped"}
                     </small>
                 </div>
@@ -105,7 +144,7 @@ export function EditFAQForm(props: EditFAQFormProps): ReactElement {
                         rows={10}
                         required
                     />
-                    
+
                     {/* Validation Warnings */}
                     {hasWarnings && (
                         <div className="faq-form-warnings">
@@ -144,11 +183,7 @@ export function EditFAQForm(props: EditFAQFormProps): ReactElement {
 
             {/* Form Actions */}
             <div className="faq-edit-form-footer">
-                <button
-                    type="button"
-                    className="faq-btn faq-btn-secondary"
-                    onClick={onCancel}
-                >
+                <button type="button" className="faq-btn faq-btn-secondary" onClick={onCancel}>
                     Cancel
                 </button>
                 <button

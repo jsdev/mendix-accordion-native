@@ -1,10 +1,62 @@
 # FAQ Accordion Widget for Mendix
 
-A secure, accessible accordion widget for creating FAQ pages in Mendix applications. Features rich text support with HTML sanitization, Markdown conversion, keyboard navigation, and comprehensive validation.
+A secure, accessible accordion widget for creating FAQ pages in Mendix applications. Features rich text support with HTML sanitization, Markdown conversion, keyboard navigation, drag-and-drop reordering, inline editing, and comprehensive validation.
+
+## 🔧 Quick Start - Required Entity Attributes
+
+When using **Database Mode**, your Mendix entity must have these attributes (case-sensitive by default):
+
+- **Summary** (String/Text) - The question/title
+- **Content** (String/Text) - The answer/detailed content  
+- **ContentFormat** (String/Enum) - Format: 'html', 'text', or 'markdown'
+- **SortOrder** (Integer/Long/Decimal) - Numeric sort order
+
+> 💡 **Customizable Attributes**: Default attribute names can be overridden via widget properties. See [Optional Attribute Overrides](#optional-attribute-overrides) for details.
 
 ## Features
 
-### � Data Source Flexibility
+### ✏️ CRUD Editing (Database Mode Only)
+
+| Feature | Description |
+|---------|-------------|
+| **Create** | Add new FAQ items with integrated form |
+| **Read** | View FAQ items from database entity |
+| **Update** | Edit existing FAQ items inline (replaces item during edit) |
+| **Delete** | Remove FAQ items with confirmation dialog |
+| **Drag-and-Drop Reorder** | Drag items by handle to reorder (auto-saves to database) |
+| **Role-Based Access** | Restrict editing to specific user roles |
+| **Edit Mode Toggle** | Switch between view and edit modes |
+
+#### Editing Configuration
+
+1. **Enable Editing**: Set `allowEditing` to `true` (only works in database mode)
+2. **Set Editor Role** (optional): Specify role name (e.g., "Administrator", "Editor")
+   - If empty: All authenticated users can edit
+   - If set: Only users with specified role can edit
+3. **Configure Actions**:
+   - `onCreateAction`: Microflow to create new FAQ entity
+   - `onSaveAction`: Microflow to save/update FAQ entity
+   - `onDeleteAction`: Microflow to delete FAQ entity
+4. **Set Sort Order Attribute**: Integer/Long/Decimal attribute for item ordering
+
+#### Edit Mode UI Components
+
+| Component | Description |
+|-----------|-------------|
+| **Edit Mode Toggle** | Button to switch between view and edit modes |
+| **Create New Button** | Opens inline form to add new FAQ item (visible in edit mode) |
+| **Edit Button** | Replaces item with inline edit form (per item, edit mode) |
+| **Delete Button** | Opens confirmation dialog (per item, edit mode) |
+| **Drag Handle** | Six-dot icon to drag and reorder items (edit mode) |
+
+#### Drag-and-Drop Reordering
+
+- Grab the drag handle (⋮⋮) on any item to reorder
+- All items automatically collapse while dragging for better visibility
+- Drop on target position to swap sort order values
+- Changes are automatically saved to the database
+
+### 📊 Data Source Flexibility
 
 | Mode | Description | Use Case |
 |------|-------------|----------|
@@ -129,7 +181,7 @@ When you use `onclick="evil()"` in content:
      - `Question` (String, 200)
      - `Answer` (String, unlimited)
      - `AnswerFormat` (String, 20) - **or** - (Enumeration: html, markdown, text)
-     - `SortOrder` (Integer) - for custom ordering
+     - `SortOrder` (Integer, Long, or Decimal) - for custom ordering and reordering support
 
 2. **Create Sample Data:**
    - Use a microflow or page to create FAQ objects
@@ -192,6 +244,25 @@ When you use `onclick="evil()"` in content:
 - **Content Attribute**: Attribute containing the FAQ answer/content  
 - **Format Attribute** (Optional): String or Enumeration attribute for content format. If not specified, defaults to HTML.
 
+#### Attribute Overrides (All or Nothing)
+
+By default, the widget expects attributes named `Summary`, `Content`, `ContentFormat`, and `SortOrder`. If your entity uses different attribute names, you can override them in the widget properties.
+
+> ⚠️ **Important:** Attribute overrides follow an **all-or-nothing** approach. You must configure **ALL FOUR** overrides, or **NONE**. Partial configuration will show an error in Studio Pro.
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| **Summary Attribute** | Summary | Custom attribute for question/title |
+| **Content Attribute** | Content | Custom attribute for answer/details |
+| **Content Format Attribute** | ContentFormat | Custom attribute for format type |
+| **Sort Order Attribute** | SortOrder | Custom attribute for ordering |
+
+**Example:** If your entity has attributes named `Question`, `Answer`, `AnswerFormat`, and `DisplayOrder`:
+1. Configure **all four** overrides in the widget properties
+2. Map each override to the corresponding attribute in your entity
+
+**Why all-or-nothing?** This ensures consistent behavior across reading, creating, editing, and reordering FAQ items. Mixing default and custom attribute names could lead to data inconsistencies.
+
 #### General
 
 - **Default Expand All**: Start with all items expanded (default: false)
@@ -213,7 +284,7 @@ Perfect for small, fixed FAQ lists:
 1. **In Mendix Studio Pro:**
    - Set **Data Source Type** to "Static Items"
    - Add FAQ items directly in the widget properties
-   - Configure Summary, Content, and Content Format for each item
+   - Configure Summary, Content, and ContentFormat, SortOrder for each item
 
 ### Database Mode - Dynamic Content
 
@@ -223,10 +294,10 @@ Perfect for large, manageable FAQ content:
    ```
    Entity: FAQ
    Attributes:
-     - Question (String)
-     - Answer (Text, unlimited)
-     - AnswerFormat (Enumeration: html, markdown, text)
-     - SortOrder (Integer) - optional for ordering
+     - Summary (String)
+     - Content (Text, unlimited)
+     - ContentFormat (Enumeration: html, markdown, text)
+     - SortOrder (Integer, Long, or Decimal) - optional for ordering
    ```
 
 2. **Configure the Widget:**
@@ -241,6 +312,98 @@ Perfect for large, manageable FAQ content:
    - Easy to add/remove/reorder FAQ items
    - Support for large FAQ collections
    - Content stored in database
+
+### Enable CRUD Editing (Database Mode Only)
+
+For editable FAQs with inline create/update/delete/reorder:
+
+1. **Create an Entity with Sort Order:**
+   ```
+   Entity: FAQ
+   Attributes:
+     - Question (String)
+     - Answer (Text, unlimited)
+     - AnswerFormat (String or Enumeration: html, markdown, text)
+     - SortOrder (Integer or Long or Decimal) - REQUIRED for reordering
+     - CreatedDate (DateTime) - optional
+     - ModifiedDate (DateTime) - optional
+   ```
+
+2. **Create Microflows for CRUD Operations (Optional - widget has built-in fallbacks):**
+
+   **Create Microflow (onCreateAction) - Optional:**
+   ```
+   Name: ACT_FAQ_Create
+   When to use: Only if you need custom default values or business logic
+   
+   Steps:
+     1. Create new FAQ object  
+     2. Set custom default values (e.g., CreatedBy, Category)
+     3. Set default SortOrder (e.g., max(SortOrder) + 10)
+     4. Commit FAQ object
+     5. Return the new FAQ object
+   
+   Built-in fallback: Widget creates object using mx.data.create with basic defaults
+   ```
+
+   **Save/Update Microflow (onSaveAction) - Optional:**
+   ```
+   Name: ACT_FAQ_Save
+   When to use: Only if you need custom validation or business logic
+   
+   Parameter: FAQ object
+   Steps:
+     1. Add custom validation logic (check permissions, validate content, etc.)
+     2. Log the change or trigger workflows
+     3. Commit FAQ object (with events)
+     4. Refresh the data source (if needed)
+   
+   Built-in fallback: Widget commits changes using mx.data.commit
+   ```
+
+   **Delete Microflow (onDeleteAction) - Optional:**
+   ```
+   Name: ACT_FAQ_Delete
+   When to use: Only if you need custom authorization or cascade deletes
+   
+   Parameter: FAQ object
+   Steps:
+     1. Check custom authorization rules
+     2. Handle cascade deletes (related attachments, etc.)
+     3. Delete FAQ object
+     4. Log the deletion
+   
+   Built-in fallback: Widget deletes object using mx.data.remove
+   ```
+
+3. **Configure Widget Properties:**
+   - Set **Data Source Type** to "Database Entity"
+   - Configure data source and attribute mappings (as above)
+   - **Map Sort Order Attribute** to "SortOrder" (required for reordering)
+   - **Enable Editing**: Set `allowEditing` to `true`
+   - **Set Editor Role** (optional): e.g., "Administrator" or "Editor"
+     - Leave empty to allow all authenticated users to edit
+   - **Set Actions** (all completely optional):
+     - `onCreateAction` → ACT_FAQ_Create *(optional - widget creates automatically)*
+     - `onSaveAction` → ACT_FAQ_Save *(optional - widget commits automatically)*
+     - `onDeleteAction` → ACT_FAQ_Delete *(optional - widget deletes automatically)*
+
+4. **Runtime Behavior:**
+   - Edit mode toggle button appears in top right
+   - In edit mode, each item shows: Drag handle, Edit button, Delete button
+   - Clicking Edit replaces the item with an inline edit form
+   - Create New button appears in edit mode (adds inline form at top)
+   - Delete shows confirmation dialog
+   - **Reordering:** Drag items by the handle (⋮⋮) to reorder - sort order values swap and auto-save to database
+   - **Editing:** Widget automatically commits changes via mx.data.commit (custom action optional)
+   - **Creating:** Widget automatically creates and commits new objects (custom action optional)
+   - **Deleting:** Widget automatically removes objects via mx.data.remove (custom action optional)
+
+5. **Security Notes:**
+   - Role-based access control via `editorRole` property
+   - Server-side validation should be implemented in microflows
+   - Widget checks role client-side (informational only)
+   - Always validate permissions in microflows for security
 
 ### HTML Format
 
@@ -372,16 +535,34 @@ npm test -- --coverage  # Run tests with coverage report
 ```
 accordion-mendix-widget/
 ├── src/
-│   ├── FAQAccordion.tsx                   # Main React component
+│   ├── FAQAccordion.tsx                   # Main widget component
 │   ├── FAQAccordion.xml                   # Widget configuration
 │   ├── FAQAccordion.editorConfig.ts       # Studio Pro config
 │   ├── FAQAccordion.editorPreview.tsx     # Preview component
 │   ├── FAQAccordion.icon.svg              # Toolbox icon
 │   ├── package.xml                        # Widget manifest
+│   ├── components/
+│   │   ├── ConfirmDialog.tsx              # Delete confirmation dialog
+│   │   ├── DraggableFAQItem.tsx           # Drag-and-drop FAQ item
+│   │   ├── EditFAQForm.tsx                # Inline edit/create form
+│   │   ├── EditModeToggle.tsx             # Edit mode toggle button
+│   │   ├── FAQEditableList.tsx            # Edit mode item list with DnD
+│   │   ├── FAQHeader.tsx                  # Widget header with controls
+│   │   ├── FAQItemActions.tsx             # Edit/Delete action buttons
+│   │   ├── FAQItemsList.tsx               # Read-only item list
+│   │   └── FAQModals.tsx                  # Modal dialogs container
+│   ├── config/
+│   │   └── attributeConfig.ts             # Attribute name configuration
+│   ├── hooks/
+│   │   ├── useFAQActions.ts               # CRUD operation hooks
+│   │   ├── useFAQData.ts                  # Data fetching hooks
+│   │   └── useEditState.ts                # Edit state management
 │   ├── ui/
 │   │   └── FAQAccordion.scss              # Styles
 │   └── utils/
-│       ├── contentProcessor.ts            # Core processing logic
+│       ├── contentProcessor.ts            # Content processing logic
+│       ├── editingUtils.ts                # Editing utility functions
+│       ├── mendixDataService.ts           # Mendix data operations
 │       └── __tests__/
 │           ├── contentProcessor.test.ts   # Unit tests
 │           ├── setup.ts                   # Test setup
@@ -553,9 +734,13 @@ Or use the **Animation Duration** property in Studio Pro (milliseconds).
 |---------|---------|---------|
 | `react` | 18.2.0 | UI framework |
 | `@mendix/pluggable-widgets-tools` | ^10.24.0 | Mendix widget tools |
+| `@dnd-kit/core` | ^6.3.1 | Drag-and-drop core |
+| `@dnd-kit/sortable` | ^10.0.0 | Sortable list utilities |
+| `@dnd-kit/utilities` | ^3.2.2 | DnD utility functions |
 | `dompurify` | ^3.3.1 | HTML sanitization |
 | `marked` | ^17.0.1 | Markdown parser |
 | `classnames` | ^2.5.1 | CSS class utilities |
+| `big.js` | ^6.2.2 | Decimal precision for sort order |
 | `jest` | 29.7.0 | Testing framework |
 
 ## License
@@ -567,6 +752,33 @@ Apache-2.0
 Anthony Delorie
 
 ## Version History
+
+### 1.1.0 - Edit Mode Enhancements
+
+**New Features:**
+- **Drag-and-Drop Reordering**: Replace Move Up/Down buttons with intuitive drag-and-drop
+  - Drag handle (⋮⋮) on each item in edit mode
+  - Items automatically collapse while dragging for better visibility
+  - Sort order values swap and auto-save to database
+- **Inline Editing**: Edit form now replaces the item inline instead of modal
+  - Better context while editing
+  - Cancel/Save buttons within the form
+- **Configurable Attribute Overrides**: Override default attribute names via widget properties
+  - Summary, Content, ContentFormat, SortOrder can all be customized
+  - No longer need to match exact attribute naming convention
+
+**Improvements:**
+- Major code refactoring: Main component split into smaller, focused components
+  - Extracted FAQHeader, FAQItemsList, FAQEditableList, FAQModals components
+  - Created useFAQData, useFAQActions, useEditState custom hooks
+  - Improved maintainability and testability
+- Better UX during drag operations (auto-collapse)
+- Cleaner edit mode interface
+
+**Dependencies Added:**
+- `@dnd-kit/core` - Drag-and-drop functionality
+- `@dnd-kit/sortable` - Sortable list utilities
+- `@dnd-kit/utilities` - DnD helper functions
 
 ### 1.0.0 - Initial Release
 

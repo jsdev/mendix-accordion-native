@@ -43,71 +43,51 @@
             </property>
             <property key="dataSource" type="datasource" isList="true" required="false">
                 <caption>FAQ Data Source (Database)</caption>
-                <description>Database entity containing FAQ items. Used when Data Source Type is "Database Entity". 
-                
-Expected Entity Structure:
-- Summary attribute: String or Text (required) - The question/title
-- Content attribute: String or Text (required) - The answer/details  
-- Format attribute: String or Enumeration (optional) - Content format: "html", "markdown", or "text" (case-insensitive)
-- Sort Order attribute: Integer/Long/Decimal (recommended) - For custom ordering and reordering support
+                <description>Database entity containing FAQ items. Used when Data Source Type is "Database Entity".
 
-Example entity "FAQ" with attributes:
-- Question (String)
-- Answer (Text)
-- AnswerFormat (String or Enumeration: html/markdown/text)
-- SortOrder (Integer) - for custom display order
-  
-If Format attribute is not provided, all content defaults to HTML format.
-  
-💡 Tip: Configure data source sorting by SortOrder ascending for proper display order.</description>
-            </property>
-            <property key="summaryAttribute" type="attribute" dataSource="dataSource" required="false">
-                <caption>Summary Attribute</caption>
-                <description>Attribute containing the FAQ question/summary (String or Text)</description>
-                <attributeTypes>
-                    <attributeType name="String"/>
-                </attributeTypes>
-            </property>
-            <property key="contentAttribute" type="attribute" dataSource="dataSource" required="false">
-                <caption>Content Attribute</caption>
-                <description>Attribute containing the FAQ answer/content (String or Text)</description>
-                <attributeTypes>
-                    <attributeType name="String"/>
-                </attributeTypes>
-            </property>
-            <property key="formatAttribute" type="attribute" dataSource="dataSource" required="false">
-                <caption>Format Attribute (Optional)</caption>
-                <description>Attribute for content format. Accepts String or Enumeration with values: "html", "markdown", or "text" (case-insensitive). Unrecognized values will default to HTML. If not specified, defaults to HTML.</description>
-                <attributeTypes>
-                    <attributeType name="String"/>
-                    <attributeType name="Enum"/>
-                </attributeTypes>
+⚠️ REQUIRED ENTITY ATTRIBUTES (Convention-Based):
+Your entity MUST have these exact attribute names:
+
+• Summary (String/Text) - The question or title
+• Content (String/Text) - The answer or detailed content  
+• ContentFormat (String/Enum) - Format type: "html", "markdown", or "text"
+• SortOrder (Integer/Long/Decimal) - Numeric sort order for Move Up/Down
+
+Example:
+Entity: MyModule.FAQ
+Attributes:
+  - Summary: String(200)
+  - Content: String (unlimited)
+  - ContentFormat: Enumeration (html|markdown|text)
+  - SortOrder: Integer
+
+💡 Configure your data source view to sort by SortOrder ascending.</description>
             </property>
         </propertyGroup>
-        <propertyGroup caption="Editing (Database Mode Only)">
+        <propertyGroup caption="Editing">
             <property key="allowEditing" type="boolean" defaultValue="false">
                 <caption>Allow Editing</caption>
-                <description>Enable edit mode for users with the specified role. Only works with Database Entity data source.</description>
+                <description>Enable CRUD editing mode (create, read, update, delete, reorder). Requires entity with Summary, Content, ContentFormat, and SortOrder attributes. Only works with "Database Entity" data source type.</description>
             </property>
             <property key="editorRole" type="string" required="false">
                 <caption>Editor Role</caption>
-                <description>User role required to edit FAQ items (e.g., "Administrator", "ContentEditor"). Leave empty to allow all authenticated users. Only applicable when Allow Editing is enabled.</description>
+                <description>User role required to edit FAQ items (e.g., "Administrator", "ContentEditor"). Leave empty to allow all authenticated users. Not applicable if Allow Editing is disabled.</description>
             </property>
             <property key="onSaveAction" type="action" required="false">
-                <caption>On Save Action</caption>
-                <description>Microflow or nanoflow to execute when saving an FAQ item. Receives the FAQ object as parameter.</description>
+                <caption>On Save Action (Optional)</caption>
+                <description>Optional microflow/nanoflow for custom save logic. If not configured, the widget automatically commits changes to Summary, Content, and ContentFormat attributes. Use this only if you need custom validation or business logic.</description>
             </property>
             <property key="onDeleteAction" type="action" required="false">
-                <caption>On Delete Action</caption>
-                <description>Microflow or nanoflow to execute when deleting an FAQ item. Receives the FAQ object as parameter.</description>
+                <caption>On Delete Action (Optional)</caption>
+                <description>Optional microflow/nanoflow for custom delete logic. If not configured, the widget automatically deletes objects using mx.data.remove. Use this only if you need custom authorization or cascade deletes.</description>
             </property>
             <property key="onCreateAction" type="action" required="false">
-                <caption>On Create Action</caption>
-                <description>Microflow or nanoflow to execute when creating a new FAQ item. Should return a new FAQ object.</description>
+                <caption>On Create Action (Optional)</caption>
+                <description>Optional microflow/nanoflow for custom object creation. If not configured, the widget automatically creates objects with Summary, Content, ContentFormat, and SortOrder attributes. Use this if you need to set additional attributes or apply business rules.</description>
             </property>
             <property key="sortOrderAttribute" type="attribute" dataSource="dataSource" required="false">
-                <caption>Sort Order Attribute</caption>
-                <description>Integer attribute for custom ordering. Used for reordering FAQ items.</description>
+                <caption>Sort Order Attribute (Required for Reordering)</caption>
+                <description>Select the "SortOrder" attribute from your entity. Required for Move Up/Down functionality. Must be Integer, Long, or Decimal type. The widget automatically swaps and commits sort order values - no custom action needed.</description>
                 <attributeTypes>
                     <attributeType name="Integer"/>
                     <attributeType name="Long"/>
@@ -133,6 +113,39 @@ If Format attribute is not provided, all content defaults to HTML format.
             <property key="animationDuration" type="integer" defaultValue="300">
                 <caption>Animation Duration (ms)</caption>
                 <description>Duration of the expand/collapse animation in milliseconds</description>
+            </property>
+        </propertyGroup>
+        <propertyGroup caption="Attribute Overrides (All or Nothing)">
+            <property key="summaryAttribute" type="attribute" dataSource="dataSource" required="false">
+                <caption>Summary Attribute</caption>
+                <description>Override the default "Summary" attribute. If you configure ANY override, you MUST configure ALL four overrides.</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                </attributeTypes>
+            </property>
+            <property key="contentAttribute" type="attribute" dataSource="dataSource" required="false">
+                <caption>Content Attribute</caption>
+                <description>Override the default "Content" attribute. If you configure ANY override, you MUST configure ALL four overrides.</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                </attributeTypes>
+            </property>
+            <property key="contentFormatAttribute" type="attribute" dataSource="dataSource" required="false">
+                <caption>Content Format Attribute</caption>
+                <description>Override the default "ContentFormat" attribute. If you configure ANY override, you MUST configure ALL four overrides.</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                    <attributeType name="Enum"/>
+                </attributeTypes>
+            </property>
+            <property key="sortOrderAttributeOverride" type="attribute" dataSource="dataSource" required="false">
+                <caption>Sort Order Attribute</caption>
+                <description>Override the default "SortOrder" attribute. If you configure ANY override, you MUST configure ALL four overrides.</description>
+                <attributeTypes>
+                    <attributeType name="Integer"/>
+                    <attributeType name="Long"/>
+                    <attributeType name="Decimal"/>
+                </attributeTypes>
             </property>
         </propertyGroup>
     </properties>

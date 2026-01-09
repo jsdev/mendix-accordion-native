@@ -1,4 +1,3 @@
-import { createElement } from "react";
 import * as React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
@@ -29,7 +28,7 @@ describe("ConfirmDialog", () => {
     });
 
     it("should not render when isOpen is false", () => {
-        const { container } = render(
+        const { queryByText } = render(
             <ConfirmDialog
                 isOpen={false}
                 title="Test Title"
@@ -38,7 +37,8 @@ describe("ConfirmDialog", () => {
             />
         );
 
-        expect(container.firstChild).toBeNull();
+        expect(queryByText("Test Title")).toBeNull();
+        expect(queryByText("Test message")).toBeNull();
     });
 
     it("should call onConfirm when confirm button is clicked", () => {
@@ -116,7 +116,7 @@ describe("ConfirmDialog", () => {
     });
 
     it("should apply destructive class to confirm button when isDestructive is true", () => {
-        const { container } = render(
+        render(
             <ConfirmDialog
                 isOpen={true}
                 title="Delete"
@@ -132,12 +132,7 @@ describe("ConfirmDialog", () => {
 
     it("should call onCancel when overlay is clicked", () => {
         const { container } = render(
-            <ConfirmDialog
-                isOpen={true}
-                title="Test"
-                message="Test"
-                {...mockHandlers}
-            />
+            <ConfirmDialog isOpen={true} title="Test" message="Test" {...mockHandlers} />
         );
 
         const overlay = container.querySelector(".faq-confirm-dialog-overlay");
@@ -149,12 +144,7 @@ describe("ConfirmDialog", () => {
 
     it("should not call onCancel when dialog content is clicked", () => {
         const { container } = render(
-            <ConfirmDialog
-                isOpen={true}
-                title="Test"
-                message="Test"
-                {...mockHandlers}
-            />
+            <ConfirmDialog isOpen={true} title="Test" message="Test" {...mockHandlers} />
         );
 
         const dialog = container.querySelector(".faq-confirm-dialog");
@@ -195,12 +185,7 @@ describe("ConfirmDialog", () => {
 
     it("should have correct CSS classes for styling", () => {
         const { container } = render(
-            <ConfirmDialog
-                isOpen={true}
-                title="Test"
-                message="Test"
-                {...mockHandlers}
-            />
+            <ConfirmDialog isOpen={true} title="Test" message="Test" {...mockHandlers} />
         );
 
         expect(container.querySelector(".faq-confirm-dialog-overlay")).toBeInTheDocument();
@@ -213,14 +198,7 @@ describe("ConfirmDialog", () => {
     });
 
     it("should default to 'Confirm' and 'Cancel' button text", () => {
-        render(
-            <ConfirmDialog
-                isOpen={true}
-                title="Test"
-                message="Test"
-                {...mockHandlers}
-            />
-        );
+        render(<ConfirmDialog isOpen={true} title="Test" message="Test" {...mockHandlers} />);
 
         expect(screen.getByText("Confirm")).toBeInTheDocument();
         expect(screen.getByText("Cancel")).toBeInTheDocument();

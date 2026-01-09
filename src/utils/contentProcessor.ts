@@ -32,19 +32,19 @@ const SANITIZE_CONFIG = {
         "pre",
         "hr",
         "table",
-        "caption",  // Added for table titles/descriptions
+        "caption", // Added for table titles/descriptions
         "thead",
         "tbody",
-        "tfoot",    // Added for table footers (e.g., summaries/totals)
+        "tfoot", // Added for table footers (e.g., summaries/totals)
         "tr",
         "th",
         "td",
-        "col",      // Added for column properties
+        "col", // Added for column properties
         "colgroup", // Added for grouping columns
         "img",
         "div",
         "span",
-        "video",  // Uncomment to enable <video> for embedded videos
+        "video", // Uncomment to enable <video> for embedded videos
         "source", // Uncomment if enabling video (for <video> sources)
         "figure", // Optional: For wrapping images/tables with captions
         "figcaption" // Optional: For figure descriptions
@@ -64,8 +64,8 @@ const SANITIZE_CONFIG = {
         // Table-specific attributes for structure and accessibility
         "rowspan",
         "colspan",
-        "scope",    // For <th> (e.g., row, col, rowgroup)
-        "headers",  // For associating <td> with <th>
+        "scope", // For <th> (e.g., row, col, rowgroup)
+        "headers", // For associating <td> with <th>
         // Video-specific (uncomment if enabling video)
         "controls",
         "autoplay",
@@ -73,8 +73,9 @@ const SANITIZE_CONFIG = {
         "muted",
         "poster"
     ],
-    ALLOW_DATA_ATTR: false,  // Keep false for security; enable only if custom data attrs are vetted
-    ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i
+    ALLOW_DATA_ATTR: false, // Keep false for security; enable only if custom data attrs are vetted
+    ALLOWED_URI_REGEXP:
+        /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp):|[^a-z]|[a-z+.-]+(?:[^a-z+.-:]|$))/i
 };
 
 /**
@@ -155,31 +156,49 @@ export function validateHTMLSyntax(html: string): string[] {
         return errors;
     }
 
-    // Check for unclosed attribute quotes
-    // Matches: attr=" or attr=' without closing quote before > or another attribute
-    const unclosedQuotePattern = /(\w+)\s*=\s*["'](?:[^"'>]*(?:["'][^"'>]+["'])*[^"'>]*)?(?=[^"'>]*>)/g;
     const allTags = html.match(/<[^>]+>/g) || [];
-    
-    allTags.forEach(tag => {
+
+    allTags.forEach((tag) => {
         // Check for attributes with unclosed quotes
         // Look for attr=" or attr=' that doesn't have a matching closing quote
         const singleQuoteMatches = tag.match(/\w+\s*=\s*'[^']*$/);
         const doubleQuoteMatches = tag.match(/\w+\s*=\s*"[^"]*$/);
-        
+
         if (singleQuoteMatches || doubleQuoteMatches) {
-            errors.push(`Unclosed attribute quote in tag: ${tag.substring(0, 50)}${tag.length > 50 ? '...' : ''}`);
+            errors.push(
+                `Unclosed attribute quote in tag: ${tag.substring(0, 50)}${
+                    tag.length > 50 ? "..." : ""
+                }`
+            );
         }
 
         // Check for unclosed opening tag (missing >)
-        if (tag.startsWith('<') && !tag.endsWith('>')) {
-            errors.push(`Unclosed tag bracket: ${tag.substring(0, 50)}${tag.length > 50 ? '...' : ''}`);
+        if (tag.startsWith("<") && !tag.endsWith(">")) {
+            errors.push(
+                `Unclosed tag bracket: ${tag.substring(0, 50)}${tag.length > 50 ? "..." : ""}`
+            );
         }
     });
 
     // Check for balanced tags (opening and closing)
     // Self-closing tags that don't need closing tags
-    const selfClosingTags = ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'];
-    
+    const selfClosingTags = [
+        "area",
+        "base",
+        "br",
+        "col",
+        "embed",
+        "hr",
+        "img",
+        "input",
+        "link",
+        "meta",
+        "param",
+        "source",
+        "track",
+        "wbr"
+    ];
+
     // Extract all tags (opening and closing)
     const tagStack: Array<{ tag: string; position: number }> = [];
     const tagRegex = /<\/?([a-zA-Z][a-zA-Z0-9]*)[^>]*>/g;
@@ -188,8 +207,8 @@ export function validateHTMLSyntax(html: string): string[] {
     while ((match = tagRegex.exec(html)) !== null) {
         const fullTag = match[0];
         const tagName = match[1].toLowerCase();
-        const isClosing = fullTag.startsWith('</');
-        const isSelfClosing = fullTag.endsWith('/>') || selfClosingTags.includes(tagName);
+        const isClosing = fullTag.startsWith("</");
+        const isSelfClosing = fullTag.endsWith("/>") || selfClosingTags.includes(tagName);
 
         if (isClosing) {
             // Closing tag - pop from stack
@@ -201,9 +220,11 @@ export function validateHTMLSyntax(html: string): string[] {
                     tagStack.pop();
                 } else {
                     // Mismatched tag
-                    errors.push(`Mismatched tags: Expected closing tag for <${lastOpened.tag}>, found </${tagName}>`);
+                    errors.push(
+                        `Mismatched tags: Expected closing tag for <${lastOpened.tag}>, found </${tagName}>`
+                    );
                     // Try to find matching opening tag in stack
-                    const matchIndex = tagStack.findIndex(t => t.tag === tagName);
+                    const matchIndex = tagStack.findIndex((t) => t.tag === tagName);
                     if (matchIndex >= 0) {
                         tagStack.splice(matchIndex, 1);
                     }
@@ -226,7 +247,11 @@ export function validateHTMLSyntax(html: string): string[] {
     const malformedAttrPattern = /<[^>]+\s+(\w+)\s*=\s*(?!["\w])[^>]*>/g;
     let attrMatch;
     while ((attrMatch = malformedAttrPattern.exec(html)) !== null) {
-        errors.push(`Malformed attribute syntax: ${attrMatch[0].substring(0, 50)}${attrMatch[0].length > 50 ? '...' : ''}`);
+        errors.push(
+            `Malformed attribute syntax: ${attrMatch[0].substring(0, 50)}${
+                attrMatch[0].length > 50 ? "..." : ""
+            }`
+        );
     }
 
     return errors;
@@ -332,18 +357,16 @@ export function getContentWarnings(content: string, format: ContentFormat): stri
             // Users might try to include <script> tags in their markdown
             const htmlPattern = /<[^>]+>/g;
             const htmlMatches = content.match(htmlPattern);
-            
+
             if (htmlMatches) {
                 // Extract just the HTML parts and validate them
                 const htmlContent = htmlMatches.join("");
                 const htmlSecurityWarnings = validateHTML(htmlContent);
                 const htmlSyntaxWarnings = validateHTMLSyntax(htmlContent);
-                
+
                 const allWarnings = [...htmlSecurityWarnings, ...htmlSyntaxWarnings];
                 if (allWarnings.length > 0) {
-                    return allWarnings.map(warning => 
-                        `Embedded HTML in markdown: ${warning}`
-                    );
+                    return allWarnings.map((warning) => `Embedded HTML in markdown: ${warning}`);
                 }
             }
             return [];

@@ -184,7 +184,7 @@ describe("Reordering Logic", () => {
     describe("Sort Order Validation", () => {
         it("should work with integer sort orders", () => {
             const orders = [new Big(1), new Big(2), new Big(3), new Big(4)];
-            
+
             orders.forEach((order, index) => {
                 expect(order.toNumber()).toBe(index + 1);
             });
@@ -192,7 +192,7 @@ describe("Reordering Logic", () => {
 
         it("should work with decimal sort orders", () => {
             const orders = [new Big("1.5"), new Big("2.5"), new Big("3.5")];
-            
+
             expect(orders[0].toString()).toBe("1.5");
             expect(orders[1].toString()).toBe("2.5");
             expect(orders[2].toString()).toBe("3.5");
@@ -200,7 +200,7 @@ describe("Reordering Logic", () => {
 
         it("should work with non-sequential sort orders", () => {
             const orders = [new Big(10), new Big(20), new Big(30), new Big(40)];
-            
+
             // After swap (index 1 and 2)
             const temp = orders[1];
             orders[1] = orders[2];
@@ -212,21 +212,21 @@ describe("Reordering Logic", () => {
 
         it("should maintain order after multiple swaps", () => {
             const orders = [new Big(1), new Big(2), new Big(3)];
-            
+
             // Swap 0 and 1
             let temp = orders[0];
             orders[0] = orders[1];
             orders[1] = temp;
-            
+
             expect(orders[0].toNumber()).toBe(2);
             expect(orders[1].toNumber()).toBe(1);
             expect(orders[2].toNumber()).toBe(3);
-            
+
             // Swap 1 and 2
             temp = orders[1];
             orders[1] = orders[2];
             orders[2] = temp;
-            
+
             expect(orders[0].toNumber()).toBe(2);
             expect(orders[1].toNumber()).toBe(3);
             expect(orders[2].toNumber()).toBe(1);
