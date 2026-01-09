@@ -86,26 +86,64 @@ export function useFAQActions({
     );
 
     /**
-     * Set attribute values on an item using overrides (ListAttributeValue.get().setValue())
-     * This is the proper Mendix Pluggable Widget API way to set values for EXISTING items
+     * Set attribute values on an item using overrides.
+     * Since setValue() is not supported on datasource-linked attributes,
+     * we need to find the actual attribute names by matching values.
      */
-    const setValuesViaOverrides = (
-        item: ObjectItem,
-        summary: string,
-        content: string,
-        format: ContentFormatEnum,
-        sortOrder: Big
-    ) => {
-        const summaryEditable = attributeOverrides!.summaryAttribute!.get(item);
-        const contentEditable = attributeOverrides!.contentAttribute!.get(item);
-        const formatEditable = attributeOverrides!.contentFormatAttribute!.get(item);
-        const sortOrderEditable = attributeOverrides!.sortOrderAttributeOverride!.get(item);
+    const findOverrideAttributeNames = (
+        mxObj: any,
+        item: ObjectItem
+    ): { summary: string; content: string; contentFormat: string; sortOrder: string } | null => {
+        // Get current values from overrides
+        const summaryValue = attributeOverrides!.summaryAttribute!.get(item).value;
+        const contentValue = attributeOverrides!.contentAttribute!.get(item).value;
+        const formatValue = attributeOverrides!.contentFormatAttribute!.get(item).value;
+        const sortOrderValue = attributeOverrides!.sortOrderAttributeOverride!.get(item).value;
 
-        console.log("FAQ Accordion: Setting values via ListAttributeValue overrides");
-        summaryEditable.setValue(summary);
-        contentEditable.setValue(content);
-        formatEditable.setValue(format);
-        sortOrderEditable.setValue(sortOrder);
+        console.log("FAQ Accordion: Finding attribute names by matching values:");
+        console.log("  Override values:", { summaryValue, contentValue, formatValue, sortOrderValue: sortOrderValue?.toString() });
+
+        // Get all attributes from the MxObject
+        const allAttrs = mxObj.getAttributes?.() || [];
+        console.log("  MxObject attributes:", allAttrs);
+
+        let summaryAttr = "";
+        let contentAttr = "";
+        let formatAttr = "";
+        let sortOrderAttr = "";
+
+        // Match by comparing values
+        for (const attrName of allAttrs) {
+            const attrValue = mxObj.get(attrName);
+            
+            if (attrValue === summaryValue && !summaryAttr) {
+                summaryAttr = attrName;
+                console.log(`  Matched summary: ${attrName} = ${attrValue}`);
+            } else if (attrValue === contentValue && !contentAttr) {
+                contentAttr = attrName;
+                console.log(`  Matched content: ${attrName} = ${attrValue}`);
+            } else if (attrValue === formatValue && !formatAttr) {
+                formatAttr = attrName;
+                console.log(`  Matched format: ${attrName} = ${attrValue}`);
+            } else if (sortOrderValue && attrValue?.toString?.() === sortOrderValue.toString() && !sortOrderAttr) {
+                sortOrderAttr = attrName;
+                console.log(`  Matched sortOrder: ${attrName} = ${attrValue}`);
+            }
+        }
+
+        if (summaryAttr && contentAttr && formatAttr && sortOrderAttr) {
+            return {
+                summary: summaryAttr,
+                content: contentAttr,
+                contentFormat: formatAttr,
+                sortOrder: sortOrderAttr
+            };
+        }
+
+        console.warn("FAQ Accordion: Could not match all attribute names:", {
+            summaryAttr, contentAttr, formatAttr, sortOrderAttr
+        });
+        return null;
     };
 
     /**
@@ -123,35 +161,6 @@ export function useFAQActions({
         mxObj.set(FAQ_DEFAULT_ATTRIBUTES.CONTENT, content);
         mxObj.set(FAQ_DEFAULT_ATTRIBUTES.CONTENT_FORMAT, format);
         mxObj.set(FAQ_DEFAULT_ATTRIBUTES.SORT_ORDER, sortOrder);
-    };
-
-    /**
-     * Get attribute names from override ListAttributeValues by inspecting an existing item.
-     * The EditableValue.id contains the full attribute path like "MyModule.MyEntity/MyAttribute"
-     * We extract just the attribute name from it.
-     */
-    const getOverrideAttributeNames = (referenceItem: ObjectItem) => {
-        const extractName = (editable: any): string => {
-            // The editable.id is typically in format "Module.Entity/AttributeName"
-            const id = editable?.id || "";
-            const parts = id.split("/");
-            return parts.length > 1 ? parts[parts.length - 1] : id;
-        };
-
-        const summaryEditable = attributeOverrides!.summaryAttribute!.get(referenceItem);
-        const contentEditable = attributeOverrides!.contentAttribute!.get(referenceItem);
-        const formatEditable = attributeOverrides!.contentFormatAttribute!.get(referenceItem);
-        const sortOrderEditable = attributeOverrides!.sortOrderAttributeOverride!.get(referenceItem);
-
-        const names = {
-            summary: extractName(summaryEditable),
-            content: extractName(contentEditable),
-            contentFormat: extractName(formatEditable),
-            sortOrder: extractName(sortOrderEditable)
-        };
-
-        console.log("FAQ Accordion: Extracted override attribute names:", names);
-        return names;
     };
 
     const handleSaveEdit = useCallback(
@@ -183,17 +192,30 @@ export function useFAQActions({
                 return;
             }
 
-            // Option 2: Use overrides if configured (setValue via ListAttributeValue)
+            // Option 2: Use overrides - find attribute names by matching values, then use mx.data.set
             if (hasAllOverrides) {
-                try {
-                    const sortValue = new Big(sortOrder);
-                    setValuesViaOverrides(item, summary, content, format, sortValue);
+                const mx = (window as any).mx;
+                mx.data.get({
+                    guid: item.id,
+                    callback: (mxObj: any) => {
+                        try {
+                            // Find the actual attribute names by matching values
+                            const attrNames = findOverrideAttributeNames(mxObj, item);
 
-                    // Fetch MxObject for commit
-                    const mx = (window as any).mx;
-                    mx.data.get({
-                        guid: item.id,
-                        callback: (mxObj: any) => {
+                            if (!attrNames) {
+                                console.error("FAQ Accordion: Could not determine attribute names from overrides");
+                                editState.cancelEditing();
+                                return;
+                            }
+
+                            console.log("FAQ Accordion: Setting values with override attribute names:", attrNames);
+
+                            // Set values using discovered attribute names
+                            mxObj.set(attrNames.summary, summary);
+                            mxObj.set(attrNames.content, content);
+                            mxObj.set(attrNames.contentFormat, format);
+                            mxObj.set(attrNames.sortOrder, new Big(sortOrder));
+
                             commitObject(
                                 mxObj,
                                 dataSource,
@@ -206,16 +228,16 @@ export function useFAQActions({
                                     console.error("FAQ Accordion: Failed to save:", error);
                                     editState.cancelEditing();
                                 });
-                        },
-                        error: (error: Error) => {
-                            console.error("FAQ Accordion: Failed to get object:", error);
+                        } catch (error) {
+                            console.error("FAQ Accordion: Failed to save with overrides:", error);
                             editState.cancelEditing();
                         }
-                    });
-                } catch (error) {
-                    console.error("FAQ Accordion: Failed to save with overrides:", error);
-                    editState.cancelEditing();
-                }
+                    },
+                    error: (error: Error) => {
+                        console.error("FAQ Accordion: Failed to get object:", error);
+                        editState.cancelEditing();
+                    }
+                });
                 return;
             }
 
@@ -285,8 +307,6 @@ export function useFAQActions({
                     return;
                 }
 
-                const newItem = await createObject(entityName);
-
                 // Determine attribute names based on whether we're using overrides
                 let attrNames: {
                     summary: string;
@@ -296,8 +316,29 @@ export function useFAQActions({
                 };
 
                 if (hasAllOverrides && dataSource.items && dataSource.items.length > 0) {
-                    // Use overrides - get names from existing item
-                    attrNames = getOverrideAttributeNames(dataSource.items[0]);
+                    // Use overrides - get names from existing item's MxObject
+                    const referenceItem = dataSource.items[0];
+                    const mx = (window as any).mx;
+
+                    // We need to fetch the MxObject to find attribute names
+                    const mxObjPromise = new Promise<any>((resolve, reject) => {
+                        mx.data.get({
+                            guid: referenceItem.id,
+                            callback: resolve,
+                            error: reject
+                        });
+                    });
+
+                    const refMxObj = await mxObjPromise;
+                    const foundNames = findOverrideAttributeNames(refMxObj, referenceItem);
+
+                    if (!foundNames) {
+                        console.error("FAQ Accordion: Could not determine attribute names from overrides for create");
+                        editState.cancelCreating();
+                        return;
+                    }
+
+                    attrNames = foundNames;
                     console.log("FAQ Accordion: Using override attribute names for create:", attrNames);
                 } else {
                     // Use defaults
@@ -309,6 +350,8 @@ export function useFAQActions({
                     };
                     console.log("FAQ Accordion: Using default attribute names for create:", attrNames);
                 }
+
+                const newItem = await createObject(entityName);
 
                 newItem.set(attrNames.summary, summary);
                 newItem.set(attrNames.content, content);
