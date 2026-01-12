@@ -2,6 +2,7 @@ import { ReactElement, useState, useEffect, useMemo } from "react";
 import { FAQAccordionContainerProps } from "../typings/FAQAccordionProps";
 import "./ui/FAQAccordion.scss";
 import { checkUserRole, canEdit } from "./utils/editingUtils";
+import { setDebugMode } from "./utils/debugLogger";
 import { useEditMode } from "./hooks/useEditMode";
 import { useFAQData } from "./hooks/useFAQData";
 import { useFAQActions } from "./hooks/useFAQActions";
@@ -25,12 +26,18 @@ export function FAQAccordion(props: FAQAccordionContainerProps): ReactElement {
         onDeleteAction,
         onCreateAction,
         sortOrderAttribute,
+        debugMode,
         // Attribute overrides (optional)
         summaryAttribute,
         contentAttribute,
         contentFormatAttribute,
         sortOrderAttributeOverride
     } = props;
+
+    // Initialize debug mode
+    useEffect(() => {
+        setDebugMode(debugMode);
+    }, [debugMode]);
 
     // Attribute overrides for useFAQData and useFAQActions (pass the ListAttributeValue objects directly)
     const attributeOverrides = useMemo(

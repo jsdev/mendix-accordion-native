@@ -4,6 +4,7 @@ import Big from "big.js";
 import { ContentFormatEnum } from "../../typings/FAQAccordionProps";
 import { FAQ_DEFAULT_ATTRIBUTES } from "../config/attributeConfig";
 import { getNextSortOrder } from "../utils/mendixDataService";
+import { debugLog } from "../utils/debugLogger";
 
 export interface FAQItem {
     summary: string;
@@ -92,19 +93,19 @@ export function useFAQData({
     // Fetch FAQ items from database
     useEffect(() => {
         if (dataSourceType === "database" && dataSource && dataSource.status === "available") {
-            console.log("FAQ Accordion: ✨ REFETCHING items from datasource");
-            console.log("FAQ Accordion: Item count:", dataSource.items?.length);
-            console.log("FAQ Accordion: All overrides configured:", hasAllOverrides);
+            debugLog("✨ REFETCHING items from datasource");
+            debugLog("Item count:", dataSource.items?.length);
+            debugLog("All overrides configured:", hasAllOverrides);
 
             if (!dataSource.items || dataSource.items.length === 0) {
-                console.log("FAQ Accordion: No items to fetch");
+                debugLog("No items to fetch");
                 setDatabaseItems([]);
                 return;
             }
 
             // If ALL overrides are configured, use ListAttributeValue.get() directly
             if (hasAllOverrides) {
-                console.log("FAQ Accordion: Using attribute overrides via ListAttributeValue.get()");
+                debugLog("Using attribute overrides via ListAttributeValue.get()");
                 const items = dataSource.items.map((item: ObjectItem) => {
                     const summary = attributeOverrides.summaryAttribute!.get(item)?.value || "Question";
                     const content = attributeOverrides.contentAttribute!.get(item)?.value || "";
@@ -120,27 +121,27 @@ export function useFAQData({
 
                     return { summary, content, contentFormat: format, sortOrder };
                 });
-                console.log("FAQ Accordion: Items loaded via overrides:", items.length);
+                debugLog("Items loaded via overrides:", items.length);
                 setDatabaseItems(items);
                 return;
             }
 
             // Warn if partial overrides configured
             if (hasAnyOverrides && !hasAllOverrides) {
-                console.warn("FAQ Accordion: Partial overrides detected! You must configure ALL four attribute overrides or NONE. Falling back to defaults.");
+                console.warn("[FAQ Accordion] Partial overrides detected! You must configure ALL four attribute overrides or NONE. Falling back to defaults.");
             }
 
             // Use mx.data.get with convention-based attribute names (defaults)
             const fetchItems = async () => {
                 const mx = (window as any).mx;
                 if (!mx) {
-                    console.log("FAQ Accordion: mx not available");
+                    debugLog("mx not available");
                     setDatabaseItems([]);
                     return;
                 }
 
                 try {
-                    console.log("FAQ Accordion: Using default attribute names via mx.data.get()");
+                    debugLog("Using default attribute names via mx.data.get()");
                     const items = await Promise.all(
                         dataSource.items!.map(async (item: ObjectItem) => {
                             return new Promise<FAQItem>((resolve) => {
@@ -166,7 +167,7 @@ export function useFAQData({
                                         resolve({ summary, content, contentFormat: format, sortOrder });
                                     },
                                     error: (error: Error) => {
-                                        console.error("FAQ Accordion: Failed to fetch item:", error);
+                                        console.error("[FAQ Accordion] Failed to fetch item:", error);
                                         resolve({
                                             summary: "Error loading question",
                                             content: "",
@@ -178,10 +179,10 @@ export function useFAQData({
                             });
                         })
                     );
-                    console.log("FAQ Accordion: Items loaded via mx.data.get:", items.length);
+                    debugLog("Items loaded via mx.data.get:", items.length);
                     setDatabaseItems(items);
                 } catch (error) {
-                    console.error("FAQ Accordion: Failed to fetch FAQ items:", error);
+                    console.error("[FAQ Accordion] Failed to fetch FAQ items:", error);
                     setDatabaseItems([]);
                 }
             };

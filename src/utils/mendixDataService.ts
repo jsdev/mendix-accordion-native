@@ -8,6 +8,7 @@
 import { ObjectItem } from "mendix";
 import Big from "big.js";
 import { FAQ_ATTRIBUTES } from "../config/attributeConfig";
+import { debugLog, debugError } from "./debugLogger";
 
 // Mendix Client API type declarations
 declare global {
@@ -137,16 +138,16 @@ export function reloadDataSource(dataSource: any): void {
  * @returns Promise that resolves with entity name or null if not found
  */
 export async function getEntityName(dataSource: any): Promise<string | null> {
-    console.log("getEntityName - dataSource:", dataSource);
-    console.log("getEntityName - dataSource keys:", Object.keys(dataSource || {}));
+    debugLog("getEntityName - dataSource:", dataSource);
+    debugLog("getEntityName - dataSource keys:", Object.keys(dataSource || {}));
 
     // Try to get entity from datasource metadata (legacy approach)
     if (dataSource?._entity) {
-        console.log("getEntityName - found _entity:", dataSource._entity);
+        debugLog("getEntityName - found _entity:", dataSource._entity);
         return dataSource._entity;
     }
     if (dataSource?.entity) {
-        console.log("getEntityName - found entity:", dataSource.entity);
+        debugLog("getEntityName - found entity:", dataSource.entity);
         return dataSource.entity;
     }
 
@@ -154,19 +155,19 @@ export async function getEntityName(dataSource: any): Promise<string | null> {
     if (dataSource?.items && dataSource.items.length > 0) {
         try {
             const firstItem = dataSource.items[0];
-            console.log("getEntityName - fetching first item MxObject...");
+            debugLog("getEntityName - fetching first item MxObject...");
 
             // Fetch the full MxObject to get entity name
             const mxObj = await getMxObject(firstItem);
             const entityName = getEntityNameFromObject(mxObj);
-            console.log("getEntityName - from MxObject:", entityName);
+            debugLog("getEntityName - from MxObject:", entityName);
             return entityName;
         } catch (error) {
             console.error("getEntityName - failed to get MxObject:", error);
         }
     }
 
-    console.log("getEntityName - not found, returning null");
+    debugLog("getEntityName - not found, returning null");
     return null;
 }
 
@@ -201,13 +202,13 @@ export function commitObject(obj: any, dataSource?: any, successMessage?: string
             return;
         }
 
-        console.log("commitObject - committing object:", obj.getEntity?.());
+        debugLog("commitObject - committing object:", obj.getEntity?.());
 
         mx.data.commit({
             mxobj: obj,
             callback: () => {
                 if (successMessage) {
-                    console.log(successMessage);
+                    debugLog(successMessage);
                 }
                 if (dataSource) {
                     reloadDataSource(dataSource);
@@ -215,7 +216,7 @@ export function commitObject(obj: any, dataSource?: any, successMessage?: string
                 resolve();
             },
             error: (error: Error) => {
-                console.error("FAQ Accordion: Failed to commit object:", error);
+                debugError(" Failed to commit object:", error);
                 reject(error);
             }
         });
@@ -248,7 +249,7 @@ export function deleteObject(
                 throw new Error(`Invalid GUID: ${guid}`);
             }
         } catch (error) {
-            console.error("FAQ Accordion: Failed to get object GUID:", error);
+            debugError(" Failed to get object GUID:", error);
             reject(error);
             return;
         }
@@ -257,7 +258,7 @@ export function deleteObject(
             guids: [guid],
             callback: () => {
                 if (successMessage) {
-                    console.log(successMessage);
+                    debugLog(successMessage);
                 }
                 if (dataSource) {
                     reloadDataSource(dataSource);
@@ -265,7 +266,7 @@ export function deleteObject(
                 resolve();
             },
             error: (error: Error) => {
-                console.error("FAQ Accordion: Failed to delete object:", error);
+                debugError(" Failed to delete object:", error);
                 reject(error);
             }
         });
@@ -290,12 +291,12 @@ export function createObject(entityName: string, successMessage?: string): Promi
             entity: entityName,
             callback: (obj: ObjectItem) => {
                 if (successMessage) {
-                    console.log(successMessage);
+                    debugLog(successMessage);
                 }
                 resolve(obj);
             },
             error: (error: Error) => {
-                console.error("FAQ Accordion: Failed to create object:", error);
+                debugError(" Failed to create object:", error);
                 reject(error);
             }
         });
@@ -353,63 +354,63 @@ export async function swapSortOrders(
         throw new Error("swapSortOrders requires sort order values or attribute accessor");
     }
 
-    console.log("swapSortOrders - START");
-    console.log("swapSortOrders - order1:", order1.toString(), "order2:", order2.toString());
+    debugLog("swapSortOrders - START");
+    debugLog("swapSortOrders - order1:", order1.toString(), "order2:", order2.toString());
 
     // Get the full MxObjects
     const mxObj1 = await getMxObject(item1);
     const mxObj2 = await getMxObject(item2);
 
-    console.log("swapSortOrders - Got MxObjects");
-    console.log("swapSortOrders - item1 entity:", mxObj1.getEntity?.());
-    console.log("swapSortOrders - item2 entity:", mxObj2.getEntity?.());
-    console.log(
+    debugLog("swapSortOrders - Got MxObjects");
+    debugLog("swapSortOrders - item1 entity:", mxObj1.getEntity?.());
+    debugLog("swapSortOrders - item2 entity:", mxObj2.getEntity?.());
+    debugLog(
         "swapSortOrders - item1 current value:",
         mxObj1.get(FAQ_ATTRIBUTES.SORT_ORDER)?.toString()
     );
-    console.log(
+    debugLog(
         "swapSortOrders - item2 current value:",
         mxObj2.get(FAQ_ATTRIBUTES.SORT_ORDER)?.toString()
     );
 
     // Swap the values
-    console.log("swapSortOrders - Setting new values...");
+    debugLog("swapSortOrders - Setting new values...");
     mxObj1.set(FAQ_ATTRIBUTES.SORT_ORDER, order2);
     mxObj2.set(FAQ_ATTRIBUTES.SORT_ORDER, order1);
 
-    console.log(
+    debugLog(
         "swapSortOrders - item1 new value:",
         mxObj1.get(FAQ_ATTRIBUTES.SORT_ORDER)?.toString()
     );
-    console.log(
+    debugLog(
         "swapSortOrders - item2 new value:",
         mxObj2.get(FAQ_ATTRIBUTES.SORT_ORDER)?.toString()
     );
 
     // Commit both objects
     return new Promise((resolve, reject) => {
-        console.log("swapSortOrders - Starting commit of first object...");
+        debugLog("swapSortOrders - Starting commit of first object...");
         mx.data.commit({
             mxobj: mxObj1,
             callback: () => {
-                console.log("swapSortOrders - committed mxObj1 ✓");
-                console.log("swapSortOrders - Starting commit of second object...");
+                debugLog("swapSortOrders - committed mxObj1 ✓");
+                debugLog("swapSortOrders - Starting commit of second object...");
                 mx.data.commit({
                     mxobj: mxObj2,
                     callback: () => {
-                        console.log("swapSortOrders - committed mxObj2 ✓");
+                        debugLog("swapSortOrders - committed mxObj2 ✓");
                         if (resolvedSuccessMessage) {
-                            console.log(resolvedSuccessMessage);
+                            debugLog(resolvedSuccessMessage);
                         }
                         if (resolvedDataSource) {
-                            console.log("swapSortOrders - Reloading datasource...");
+                            debugLog("swapSortOrders - Reloading datasource...");
                             reloadDataSource(resolvedDataSource);
                         }
-                        console.log("swapSortOrders - COMPLETE ✓");
+                        debugLog("swapSortOrders - COMPLETE ✓");
                         resolve();
                     },
                     error: (error: Error) => {
-                        console.error("FAQ Accordion: Failed to commit second item:", error);
+                        debugError(" Failed to commit second item:", error);
                         console.error(
                             "swapSortOrders - Error details:",
                             error.message,
@@ -420,7 +421,7 @@ export async function swapSortOrders(
                 });
             },
             error: (error: Error) => {
-                console.error("FAQ Accordion: Failed to commit first item:", error);
+                debugError(" Failed to commit first item:", error);
                 console.error("swapSortOrders - Error details:", error.message, error.stack);
                 reject(error);
             }

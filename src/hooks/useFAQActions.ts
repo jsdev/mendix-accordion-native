@@ -5,6 +5,7 @@ import { DragEndEvent } from "@dnd-kit/core";
 
 import { ContentFormatEnum } from "../../typings/FAQAccordionProps";
 import { FAQ_DEFAULT_ATTRIBUTES } from "../config/attributeConfig";
+import { debugLog, debugWarn, debugError } from "../utils/debugLogger";
 import {
     commitObject,
     deleteObject,
@@ -100,12 +101,12 @@ export function useFAQActions({
         const formatValue = attributeOverrides!.contentFormatAttribute!.get(item).value;
         const sortOrderValue = attributeOverrides!.sortOrderAttributeOverride!.get(item).value;
 
-        console.log("FAQ Accordion: Finding attribute names by matching values:");
-        console.log("  Override values:", { summaryValue, contentValue, formatValue, sortOrderValue: sortOrderValue?.toString() });
+        debugLog("Finding attribute names by matching values:");
+        debugLog("  Override values:", { summaryValue, contentValue, formatValue, sortOrderValue: sortOrderValue?.toString() });
 
         // Get all attributes from the MxObject
         const allAttrs = mxObj.getAttributes?.() || [];
-        console.log("  MxObject attributes:", allAttrs);
+        debugLog("  MxObject attributes:", allAttrs);
 
         let summaryAttr = "";
         let contentAttr = "";
@@ -118,16 +119,16 @@ export function useFAQActions({
             
             if (attrValue === summaryValue && !summaryAttr) {
                 summaryAttr = attrName;
-                console.log(`  Matched summary: ${attrName} = ${attrValue}`);
+                debugLog(`  Matched summary: ${attrName} = ${attrValue}`);
             } else if (attrValue === contentValue && !contentAttr) {
                 contentAttr = attrName;
-                console.log(`  Matched content: ${attrName} = ${attrValue}`);
+                debugLog(`  Matched content: ${attrName} = ${attrValue}`);
             } else if (attrValue === formatValue && !formatAttr) {
                 formatAttr = attrName;
-                console.log(`  Matched format: ${attrName} = ${attrValue}`);
+                debugLog(`  Matched format: ${attrName} = ${attrValue}`);
             } else if (sortOrderValue && attrValue?.toString?.() === sortOrderValue.toString() && !sortOrderAttr) {
                 sortOrderAttr = attrName;
-                console.log(`  Matched sortOrder: ${attrName} = ${attrValue}`);
+                debugLog(`  Matched sortOrder: ${attrName} = ${attrValue}`);
             }
         }
 
@@ -140,7 +141,7 @@ export function useFAQActions({
             };
         }
 
-        console.warn("FAQ Accordion: Could not match all attribute names:", {
+        debugWarn("Could not match all attribute names:", {
             summaryAttr, contentAttr, formatAttr, sortOrderAttr
         });
         return null;
@@ -156,7 +157,7 @@ export function useFAQActions({
         format: ContentFormatEnum,
         sortOrder: Big
     ) => {
-        console.log("FAQ Accordion: Setting values via default attribute names");
+        debugLog("Setting values via default attribute names");
         mxObj.set(FAQ_DEFAULT_ATTRIBUTES.SUMMARY, summary);
         mxObj.set(FAQ_DEFAULT_ATTRIBUTES.CONTENT, content);
         mxObj.set(FAQ_DEFAULT_ATTRIBUTES.CONTENT_FORMAT, format);
@@ -203,12 +204,12 @@ export function useFAQActions({
                             const attrNames = findOverrideAttributeNames(mxObj, item);
 
                             if (!attrNames) {
-                                console.error("FAQ Accordion: Could not determine attribute names from overrides");
+                                debugError("Could not determine attribute names from overrides");
                                 editState.cancelEditing();
                                 return;
                             }
 
-                            console.log("FAQ Accordion: Setting values with override attribute names:", attrNames);
+                            debugLog("Setting values with override attribute names:", attrNames);
 
                             // Set values using discovered attribute names
                             mxObj.set(attrNames.summary, summary);
@@ -218,23 +219,23 @@ export function useFAQActions({
 
                             commitObject(
                                 mxObj,
-                                dataSource,
-                                "FAQ Accordion: Successfully saved FAQ item"
+                                dataSource
                             )
                                 .then(() => {
+                                    debugLog("Successfully saved FAQ item");
                                     editState.finishEditing();
                                 })
                                 .catch((error: Error) => {
-                                    console.error("FAQ Accordion: Failed to save:", error);
+                                    debugError("Failed to save:", error);
                                     editState.cancelEditing();
                                 });
                         } catch (error) {
-                            console.error("FAQ Accordion: Failed to save with overrides:", error);
+                            debugError("Failed to save with overrides:", error);
                             editState.cancelEditing();
                         }
                     },
                     error: (error: Error) => {
-                        console.error("FAQ Accordion: Failed to get object:", error);
+                        debugError("Failed to get object:", error);
                         editState.cancelEditing();
                     }
                 });
@@ -254,24 +255,24 @@ export function useFAQActions({
 
                         commitObject(
                             mxObj,
-                            dataSource,
-                            "FAQ Accordion: Successfully saved FAQ item"
+                            dataSource
                         )
                             .then(() => {
+                                debugLog("Successfully saved FAQ item");
                                 editState.finishEditing();
                             })
                             .catch((error: Error) => {
-                                console.error("FAQ Accordion: Failed to save:", error);
+                                debugError("Failed to save:", error);
                                 editState.cancelEditing();
                             });
                     },
                     error: (error: Error) => {
-                        console.error("FAQ Accordion: Failed to get object:", error);
+                        debugError("Failed to get object:", error);
                         editState.cancelEditing();
                     }
                 });
             } catch (error) {
-                console.error("FAQ Accordion: Failed to commit:", error);
+                debugError("Failed to commit:", error);
                 editState.cancelEditing();
             }
         },
@@ -302,7 +303,7 @@ export function useFAQActions({
                 const entityName = await getEntityName(dataSource);
 
                 if (!entityName) {
-                    console.error("FAQ Accordion: Cannot create new item - entity name not found");
+                    debugError("Cannot create new item - entity name not found");
                     editState.cancelCreating();
                     return;
                 }
@@ -333,13 +334,13 @@ export function useFAQActions({
                     const foundNames = findOverrideAttributeNames(refMxObj, referenceItem);
 
                     if (!foundNames) {
-                        console.error("FAQ Accordion: Could not determine attribute names from overrides for create");
+                        debugError("Could not determine attribute names from overrides for create");
                         editState.cancelCreating();
                         return;
                     }
 
                     attrNames = foundNames;
-                    console.log("FAQ Accordion: Using override attribute names for create:", attrNames);
+                    debugLog("Using override attribute names for create:", attrNames);
                 } else {
                     // Use defaults
                     attrNames = {
@@ -348,7 +349,7 @@ export function useFAQActions({
                         contentFormat: FAQ_DEFAULT_ATTRIBUTES.CONTENT_FORMAT,
                         sortOrder: FAQ_DEFAULT_ATTRIBUTES.SORT_ORDER
                     };
-                    console.log("FAQ Accordion: Using default attribute names for create:", attrNames);
+                    debugLog("Using default attribute names for create:", attrNames);
                 }
 
                 const newItem = await createObject(entityName);
@@ -377,12 +378,12 @@ export function useFAQActions({
 
                 await commitObject(
                     newItem,
-                    dataSource,
-                    "FAQ Accordion: Successfully created new FAQ item"
+                    dataSource
                 );
+                debugLog("Successfully created new FAQ item");
                 editState.finishCreating();
             } catch (error) {
-                console.error("FAQ Accordion: Failed to create new item:", error);
+                debugError("Failed to create new item:", error);
                 editState.cancelCreating();
             }
         },

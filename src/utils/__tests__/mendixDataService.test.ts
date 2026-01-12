@@ -14,6 +14,16 @@ import {
 } from "../mendixDataService";
 import Big from "big.js";
 import { FAQ_ATTRIBUTES } from "../../config/attributeConfig";
+import { setDebugMode } from "../debugLogger";
+
+// Enable debug mode for tests so we can verify log messages
+beforeAll(() => {
+    setDebugMode(true);
+});
+
+afterAll(() => {
+    setDebugMode(false);
+});
 
 // Helper to set up window.mx mock
 function setupWindowMx(method: "commit" | "create" | "remove") {
@@ -251,7 +261,7 @@ describe("mendixDataService", () => {
 
             await commitObject(mockObj, undefined, "Success!");
 
-            expect(consoleLogSpy).toHaveBeenCalledWith("Success!");
+            expect(consoleLogSpy).toHaveBeenCalledWith("[FAQ Accordion]", "Success!");
             consoleLogSpy.mockRestore();
         });
 
@@ -275,7 +285,8 @@ describe("mendixDataService", () => {
 
             await expect(commitObject(mockObj)).rejects.toThrow("Commit failed");
             expect(consoleErrorSpy).toHaveBeenCalledWith(
-                "FAQ Accordion: Failed to commit object:",
+                "[FAQ Accordion]",
+                " Failed to commit object:",
                 mockError
             );
             consoleErrorSpy.mockRestore();
@@ -365,7 +376,7 @@ describe("mendixDataService", () => {
 
             await deleteObject(mockObj, undefined, "Deleted successfully!");
 
-            expect(consoleLogSpy).toHaveBeenCalledWith("Deleted successfully!");
+            expect(consoleLogSpy).toHaveBeenCalledWith("[FAQ Accordion]", "Deleted successfully!");
             consoleLogSpy.mockRestore();
         });
 
@@ -392,7 +403,8 @@ describe("mendixDataService", () => {
 
             await expect(deleteObject(mockObj)).rejects.toThrow("Delete failed");
             expect(consoleErrorSpy).toHaveBeenCalledWith(
-                "FAQ Accordion: Failed to delete object:",
+                "[FAQ Accordion]",
+                " Failed to delete object:",
                 mockError
             );
             consoleErrorSpy.mockRestore();
@@ -447,7 +459,7 @@ describe("mendixDataService", () => {
 
             await createObject("MyModule.FAQ", "Created new FAQ!");
 
-            expect(consoleLogSpy).toHaveBeenCalledWith("Created new FAQ!");
+            expect(consoleLogSpy).toHaveBeenCalledWith("[FAQ Accordion]", "Created new FAQ!");
             consoleLogSpy.mockRestore();
         });
 
@@ -472,7 +484,8 @@ describe("mendixDataService", () => {
 
             await expect(createObject("MyModule.FAQ")).rejects.toThrow("Create failed");
             expect(consoleErrorSpy).toHaveBeenCalledWith(
-                "FAQ Accordion: Failed to create object:",
+                "[FAQ Accordion]",
+                " Failed to create object:",
                 mockError
             );
             consoleErrorSpy.mockRestore();
@@ -579,7 +592,7 @@ describe("mendixDataService", () => {
                 "Swapped successfully!"
             );
 
-            expect(consoleLogSpy).toHaveBeenCalledWith("Swapped successfully!");
+            expect(consoleLogSpy).toHaveBeenCalledWith("[FAQ Accordion]", "Swapped successfully!");
             consoleLogSpy.mockRestore();
         });
 
@@ -640,7 +653,8 @@ describe("mendixDataService", () => {
                 swapSortOrders(mockItem1, mockItem2, mockSortOrderAttribute)
             ).rejects.toThrow("First commit failed");
             expect(consoleErrorSpy).toHaveBeenCalledWith(
-                "FAQ Accordion: Failed to commit first item:",
+                "[FAQ Accordion]",
+                " Failed to commit first item:",
                 mockError
             );
             consoleErrorSpy.mockRestore();
@@ -681,7 +695,8 @@ describe("mendixDataService", () => {
                 swapSortOrders(mockItem1, mockItem2, mockSortOrderAttribute)
             ).rejects.toThrow("Second commit failed");
             expect(consoleErrorSpy).toHaveBeenCalledWith(
-                "FAQ Accordion: Failed to commit second item:",
+                "[FAQ Accordion]",
+                " Failed to commit second item:",
                 mockError
             );
             consoleErrorSpy.mockRestore();

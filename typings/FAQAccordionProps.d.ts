@@ -45,6 +45,7 @@ export interface FAQAccordionContainerProps {
     contentAttribute?: ListAttributeValue<string>;
     contentFormatAttribute?: ListAttributeValue<string>;
     sortOrderAttributeOverride?: ListAttributeValue<Big>;
+    debugMode: boolean;
 }
 
 export interface FAQAccordionPreviewProps {
@@ -75,4 +76,5 @@ export interface FAQAccordionPreviewProps {
     contentAttribute: string;
     contentFormatAttribute: string;
     sortOrderAttributeOverride: string;
+    debugMode: boolean;
 }

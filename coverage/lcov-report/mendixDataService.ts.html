@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">83.85% </span>
+                <span class="strong">83.95% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>135/161</span>
+                <span class='fraction'>136/162</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">83.75% </span>
+                <span class="strong">83.85% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>134/160</span>
+                <span class='fraction'>135/161</span>
             </div>
         
             
@@ -492,7 +492,8 @@
 <a name='L427'></a><a href='#L427'>427</a>
 <a name='L428'></a><a href='#L428'>428</a>
 <a name='L429'></a><a href='#L429'>429</a>
-<a name='L430'></a><a href='#L430'>430</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L430'></a><a href='#L430'>430</a>
+<a name='L431'></a><a href='#L431'>431</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -500,6 +501,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -931,6 +933,7 @@
 import { ObjectItem } from "mendix";
 import Big from "big.js";
 import { FAQ_ATTRIBUTES } from "../config/attributeConfig";
+import { debugLog, debugError } from "./debugLogger";
 &nbsp;
 // Mendix Client API type declarations
 declare global {
@@ -1060,16 +1063,16 @@ export function reloadDataSource(dataSource: any): void {
  * @returns Promise that resolves with entity name or null if not found
  */
 export async function getEntityName(dataSource: any): Promise&lt;string | null&gt; {
-    console.log("getEntityName - dataSource:", dataSource);
-    console.log("getEntityName - dataSource keys:", Object.keys(dataSource || {}));
+    debugLog("getEntityName - dataSource:", dataSource);
+    debugLog("getEntityName - dataSource keys:", Object.keys(dataSource || {}));
 &nbsp;
     // Try to get entity from datasource metadata (legacy approach)
     if (dataSource?._entity) {
-        console.log("getEntityName - found _entity:", dataSource._entity);
+        debugLog("getEntityName - found _entity:", dataSource._entity);
         return dataSource._entity;
     }
     if (dataSource?.entity) {
-        console.log("getEntityName - found entity:", dataSource.entity);
+        debugLog("getEntityName - found entity:", dataSource.entity);
         return dataSource.entity;
     }
 &nbsp;
@@ -1077,19 +1080,19 @@ export async function getEntityName(dataSource: any): Promise&lt;string | null&g
     <span class="missing-if-branch" title="if path not taken" >I</span>if (dataSource?.items &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >dataSource.items.length &gt; 0)</span> {
 <span class="cstat-no" title="statement not covered" >        try {</span>
             const firstItem = <span class="cstat-no" title="statement not covered" >dataSource.items[0];</span>
-<span class="cstat-no" title="statement not covered" >            console.log("getEntityName - fetching first item MxObject...");</span>
+<span class="cstat-no" title="statement not covered" >            debugLog("getEntityName - fetching first item MxObject...");</span>
 &nbsp;
             // Fetch the full MxObject to get entity name
             const mxObj = <span class="cstat-no" title="statement not covered" >await getMxObject(firstItem);</span>
             const entityName = <span class="cstat-no" title="statement not covered" >getEntityNameFromObject(mxObj);</span>
-<span class="cstat-no" title="statement not covered" >            console.log("getEntityName - from MxObject:", entityName);</span>
+<span class="cstat-no" title="statement not covered" >            debugLog("getEntityName - from MxObject:", entityName);</span>
 <span class="cstat-no" title="statement not covered" >            return entityName;</span>
         } catch (error) {
 <span class="cstat-no" title="statement not covered" >            console.error("getEntityName - failed to get MxObject:", error);</span>
         }
     }
 &nbsp;
-    console.log("getEntityName - not found, returning null");
+    debugLog("getEntityName - not found, returning null");
     return null;
 }
 &nbsp;
@@ -1124,13 +1127,13 @@ export function commitObject(obj: any, dataSource?: any, successMessage?: string
             return;
         }
 &nbsp;
-        console.log("commitObject - committing object:", obj.getEntity?.());
+        debugLog("commitObject - committing object:", obj.getEntity?.());
 &nbsp;
         mx.data.commit({
             mxobj: obj,
             callback: () =&gt; {
                 if (successMessage) {
-                    console.log(successMessage);
+                    debugLog(successMessage);
                 }
                 if (dataSource) {
                     reloadDataSource(dataSource);
@@ -1138,7 +1141,7 @@ export function commitObject(obj: any, dataSource?: any, successMessage?: string
                 resolve();
             },
             error: (error: Error) =&gt; {
-                console.error("FAQ Accordion: Failed to commit object:", error);
+                debugError(" Failed to commit object:", error);
                 reject(error);
             }
         });
@@ -1171,7 +1174,7 @@ export function deleteObject(
 <span class="cstat-no" title="statement not covered" >                throw new Error(`Invalid GUID: ${guid}`);</span>
             }
         } catch (error) {
-<span class="cstat-no" title="statement not covered" >            console.error("FAQ Accordion: Failed to get object GUID:", error);</span>
+<span class="cstat-no" title="statement not covered" >            debugError(" Failed to get object GUID:", error);</span>
 <span class="cstat-no" title="statement not covered" >            reject(error);</span>
 <span class="cstat-no" title="statement not covered" >            return;</span>
         }
@@ -1180,7 +1183,7 @@ export function deleteObject(
             guids: [guid],
             callback: () =&gt; {
                 if (successMessage) {
-                    console.log(successMessage);
+                    debugLog(successMessage);
                 }
                 if (dataSource) {
                     reloadDataSource(dataSource);
@@ -1188,7 +1191,7 @@ export function deleteObject(
                 resolve();
             },
             error: (error: Error) =&gt; {
-                console.error("FAQ Accordion: Failed to delete object:", error);
+                debugError(" Failed to delete object:", error);
                 reject(error);
             }
         });
@@ -1213,12 +1216,12 @@ export function createObject(entityName: string, successMessage?: string): Promi
             entity: entityName,
             callback: (obj: ObjectItem) =&gt; {
                 if (successMessage) {
-                    console.log(successMessage);
+                    debugLog(successMessage);
                 }
                 resolve(obj);
             },
             error: (error: Error) =&gt; {
-                console.error("FAQ Accordion: Failed to create object:", error);
+                debugError(" Failed to create object:", error);
                 reject(error);
             }
         });
@@ -1276,63 +1279,63 @@ export async function swapSortOrders(
 <span class="cstat-no" title="statement not covered" >        throw new Error("swapSortOrders requires sort order values or attribute accessor");</span>
     }
 &nbsp;
-    console.log("swapSortOrders - START");
-    console.log("swapSortOrders - order1:", order1.toString(), "order2:", order2.toString());
+    debugLog("swapSortOrders - START");
+    debugLog("swapSortOrders - order1:", order1.toString(), "order2:", order2.toString());
 &nbsp;
     // Get the full MxObjects
     const mxObj1 = await getMxObject(item1);
     const mxObj2 = await getMxObject(item2);
 &nbsp;
-    console.log("swapSortOrders - Got MxObjects");
-    console.log("swapSortOrders - item1 entity:", mxObj1.getEntity?.());
-    console.log("swapSortOrders - item2 entity:", mxObj2.getEntity?.());
-    console.log(
+    debugLog("swapSortOrders - Got MxObjects");
+    debugLog("swapSortOrders - item1 entity:", mxObj1.getEntity?.());
+    debugLog("swapSortOrders - item2 entity:", mxObj2.getEntity?.());
+    debugLog(
         "swapSortOrders - item1 current value:",
         mxObj1.get(FAQ_ATTRIBUTES.SORT_ORDER)?.toString()
     );
-    console.log(
+    debugLog(
         "swapSortOrders - item2 current value:",
         mxObj2.get(FAQ_ATTRIBUTES.SORT_ORDER)?.toString()
     );
 &nbsp;
     // Swap the values
-    console.log("swapSortOrders - Setting new values...");
+    debugLog("swapSortOrders - Setting new values...");
     mxObj1.set(FAQ_ATTRIBUTES.SORT_ORDER, order2);
     mxObj2.set(FAQ_ATTRIBUTES.SORT_ORDER, order1);
 &nbsp;
-    console.log(
+    debugLog(
         "swapSortOrders - item1 new value:",
         mxObj1.get(FAQ_ATTRIBUTES.SORT_ORDER)?.toString()
     );
-    console.log(
+    debugLog(
         "swapSortOrders - item2 new value:",
         mxObj2.get(FAQ_ATTRIBUTES.SORT_ORDER)?.toString()
     );
 &nbsp;
     // Commit both objects
     return new Promise((resolve, reject) =&gt; {
-        console.log("swapSortOrders - Starting commit of first object...");
+        debugLog("swapSortOrders - Starting commit of first object...");
         mx.data.commit({
             mxobj: mxObj1,
             callback: () =&gt; {
-                console.log("swapSortOrders - committed mxObj1 ✓");
-                console.log("swapSortOrders - Starting commit of second object...");
+                debugLog("swapSortOrders - committed mxObj1 ✓");
+                debugLog("swapSortOrders - Starting commit of second object...");
                 mx.data.commit({
                     mxobj: mxObj2,
                     callback: () =&gt; {
-                        console.log("swapSortOrders - committed mxObj2 ✓");
+                        debugLog("swapSortOrders - committed mxObj2 ✓");
                         if (resolvedSuccessMessage) {
-                            console.log(resolvedSuccessMessage);
+                            debugLog(resolvedSuccessMessage);
                         }
                         if (resolvedDataSource) {
-                            console.log("swapSortOrders - Reloading datasource...");
+                            debugLog("swapSortOrders - Reloading datasource...");
                             reloadDataSource(resolvedDataSource);
                         }
-                        console.log("swapSortOrders - COMPLETE ✓");
+                        debugLog("swapSortOrders - COMPLETE ✓");
                         resolve();
                     },
                     error: (error: Error) =&gt; {
-                        console.error("FAQ Accordion: Failed to commit second item:", error);
+                        debugError(" Failed to commit second item:", error);
                         console.error(
                             "swapSortOrders - Error details:",
                             error.message,
@@ -1343,7 +1346,7 @@ export async function swapSortOrders(
                 });
             },
             error: (error: Error) =&gt; {
-                console.error("FAQ Accordion: Failed to commit first item:", error);
+                debugError(" Failed to commit first item:", error);
                 console.error("swapSortOrders - Error details:", error.message, error.stack);
                 reject(error);
             }
@@ -1357,7 +1360,7 @@ export async function swapSortOrders(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-09T20:23:38.455Z
+                at 2026-01-12T15:09:52.558Z
             </div>
         <script src="prettify.js"></script>
         <script>

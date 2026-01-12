@@ -148,5 +148,11 @@ Attributes:
                 </attributeTypes>
             </property>
         </propertyGroup>
+        <propertyGroup caption="Advanced">
+            <property key="debugMode" type="boolean" defaultValue="false">
+                <caption>Debug Mode</caption>
+                <description>Enable debug logging to browser console. Useful for troubleshooting. Default: OFF</description>
+            </property>
+        </propertyGroup>
     </properties>
 </widget>

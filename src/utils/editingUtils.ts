@@ -1,6 +1,7 @@
 /**
  * Utility functions for editing mode and role-based access control
  */
+import { debugLog } from "./debugLogger";
 
 /**
  * Checks if the current user has the required role for editing
@@ -18,10 +19,10 @@ export async function checkUserRole(requiredRole: string): Promise<boolean> {
         // Note: In actual Mendix runtime, you'd use mx.session or similar
         // This is a placeholder - Mendix widgets typically use server-side validation
         // For now, we'll return true and rely on microflow validation
-        console.log(`Checking role: ${requiredRole}`);
+        debugLog(`Checking role: ${requiredRole}`);
         return true;
     } catch (error) {
-        console.error("Error checking user role:", error);
+        console.error("[FAQ Accordion] Error checking user role:", error);
         return false;
     }
 }
